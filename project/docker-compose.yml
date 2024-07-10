@@ -1,0 +1,14 @@
+version: '3'
+
+services:
+
+  esl-service:
+    build:
+      context: ./../esl-service
+      dockerfile: ./../esl-service/esl-service.dockerfile
+    restart: always
+    deploy:
+      mode: replicated
+      replicas: 1
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
