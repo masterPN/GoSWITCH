@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	fshost   = flag.String("fshost", "localhost", "Freeswitch hostname. Default: localhost")
+	fshost   = flag.String("fshost", "host.docker.internal", "Freeswitch hostname. Default: localhost")
 	fsport   = flag.Uint("fsport", 8021, "Freeswitch port. Default: 8021")
 	password = flag.String("pass", "ClueCon", "Freeswitch password. Default: ClueCon")
 	timeout  = flag.Int("timeout", 10, "Freeswitch conneciton timeout in seconds. Default: 10")
