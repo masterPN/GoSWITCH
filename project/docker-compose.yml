@@ -12,3 +12,17 @@ services:
       replicas: 1
     extra_hosts:
       - "host.docker.internal:host-gateway"
+
+  sql-server:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    user: root
+    ports:
+      - 8081:1433
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=OneVois1
+      - MSSQL_PID=Standard
+    volumes:
+      - ./../sql-server/data:/var/opt/mssql/data
+      - ./../sql-server/log:/var/opt/mssql/log
+      - ./../sql-server/secret:/var/opt/mssql/secrets
