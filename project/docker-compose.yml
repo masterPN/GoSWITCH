@@ -13,6 +13,17 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
+  sql-service:
+    build:
+      context: ./../sql-service
+      dockerfile: ./../sql-service/sql-service.dockerfile
+    ports:
+      - 8083:8080
+    restart: always
+    deploy:
+      mode: replicated
+      replicas: 1
+
   sql-server:
     image: mcr.microsoft.com/mssql/server:2022-latest
     user: root
