@@ -12,6 +12,18 @@ services:
       replicas: 1
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    depends_on:
+      sql-create-table-service:
+        condition: service_completed_successfully
+      redis-server:
+        condition: service_started
+
+  sql-create-table-service:
+    build: 
+      context: ./../sql-create-table-service
+      dockerfile: ./../sql-create-table-service/sql-create-table-service.dockerfile
+    depends_on:
+      - sql-server
 
   sql-service:
     build:
