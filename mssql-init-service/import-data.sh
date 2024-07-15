@@ -2,7 +2,7 @@
 #do this in a loop because the timing for when the SQL instance is ready is indeterminate
 for i in {1..50};
 do
-    /opt/mssql-tools/bin/sqlcmd -S sql-server -U sa -P OneVois1 -d master -i setup.sql
+    /opt/mssql-tools/bin/sqlcmd -S mssql-server -U sa -P OneVois1 -d master -i setup.sql
     if [ $? -eq 0 ]
     then
         echo "setup.sql completed"

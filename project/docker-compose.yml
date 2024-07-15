@@ -23,7 +23,7 @@ services:
       context: ./../mssql-init-service
       dockerfile: ./../mssql-init-service/mssql-init-service.dockerfile
     depends_on:
-      - sql-server
+      - mssql-server
 
   mssql-service:
     build:
@@ -39,7 +39,7 @@ services:
       mssql-init-service:
         condition: service_completed_successfully
 
-  sql-server:
+  mssql-server:
     image: mcr.microsoft.com/mssql/server:2022-latest
     user: root
     ports:
@@ -49,9 +49,9 @@ services:
       - MSSQL_SA_PASSWORD=OneVois1
       - MSSQL_PID=Standard
     volumes:
-      - ./../sql-server/data:/var/opt/mssql/data
-      - ./../sql-server/log:/var/opt/mssql/log
-      - ./../sql-server/secret:/var/opt/mssql/secrets
+      - ./../mssql-server/data:/var/opt/mssql/data
+      - ./../mssql-server/log:/var/opt/mssql/log
+      - ./../mssql-server/secret:/var/opt/mssql/secrets
     restart: unless-stopped
 
   redis-server:
