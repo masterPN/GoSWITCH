@@ -12,6 +12,18 @@ services:
       replicas: 1
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    depends_on:
+      mssql-init-service:
+        condition: service_completed_successfully
+      redis-server:
+        condition: service_started
+
+  mssql-init-service:
+    build: 
+      context: ./../mssql-init-service
+      dockerfile: ./../mssql-init-service/mssql-init-service.dockerfile
+    depends_on:
+      - sql-server
 
   sql-service:
     build:
