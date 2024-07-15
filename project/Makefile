@@ -30,5 +30,5 @@ build_esl:
 ## build_sql: builds the sql binary as a linux executable
 build_sql:
 	@echo "Building sql binary..."
-	cd ../sql-service && env GOOS=linux CGO_ENABLED=0 go build -o ${SQL_BINARY} ./cmd/api
+	cd ../mssql-service && env GOOS=linux CGO_ENABLED=0 go build -o ${SQL_BINARY} ./cmd/api
 	@echo "Done!"

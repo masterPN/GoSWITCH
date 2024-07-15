@@ -1,4 +1,4 @@
-# Project sql-service
+# Project mssql-service
 
 One Paragraph of project description goes here
 

@@ -25,16 +25,19 @@ services:
     depends_on:
       - sql-server
 
-  sql-service:
+  mssql-service:
     build:
-      context: ./../sql-service
-      dockerfile: ./../sql-service/sql-service.dockerfile
+      context: ./../mssql-service
+      dockerfile: ./../mssql-service/mssql-service.dockerfile
     ports:
       - 8083:8080
     restart: always
     deploy:
       mode: replicated
       replicas: 1
+    depends_on:
+      mssql-init-service:
+        condition: service_completed_successfully
 
   sql-server:
     image: mcr.microsoft.com/mssql/server:2022-latest

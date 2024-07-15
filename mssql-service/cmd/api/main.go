@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"sql-service/internal/server"
+	"mssql-service/internal/server"
 )
 
 func main() {

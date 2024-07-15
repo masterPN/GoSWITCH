@@ -4,7 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"net/http/httptest"
-	"sql-service/internal/server"
+	"mssql-service/internal/server"
 	"testing"
 )
 
