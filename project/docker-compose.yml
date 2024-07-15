@@ -13,15 +13,15 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
-      sql-create-table-service:
+      mssql-init-service:
         condition: service_completed_successfully
       redis-server:
         condition: service_started
 
-  sql-create-table-service:
+  mssql-init-service:
     build: 
-      context: ./../sql-create-table-service
-      dockerfile: ./../sql-create-table-service/sql-create-table-service.dockerfile
+      context: ./../mssql-init-service
+      dockerfile: ./../mssql-init-service/mssql-init-service.dockerfile
     depends_on:
       - sql-server
 
