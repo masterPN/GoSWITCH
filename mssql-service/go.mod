@@ -1,4 +1,4 @@
-module sql-service
+module mssql-service
 
 go 1.22.5
 
