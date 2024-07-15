@@ -49,6 +49,7 @@ services:
       - ./../sql-server/data:/var/opt/mssql/data
       - ./../sql-server/log:/var/opt/mssql/log
       - ./../sql-server/secret:/var/opt/mssql/secrets
+    restart: unless-stopped
 
   redis-server:
     image: redis:latest
