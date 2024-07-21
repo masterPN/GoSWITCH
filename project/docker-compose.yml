@@ -15,8 +15,6 @@ services:
     depends_on:
       mssql-init-service:
         condition: service_completed_successfully
-      redis-server:
-        condition: service_started
 
   mssql-init-service:
     build: 
@@ -53,14 +51,4 @@ services:
       - ./../mssql-server/log:/var/opt/mssql/log
       - ./../mssql-server/secret:/var/opt/mssql/secrets
     restart: unless-stopped
-
-  redis-server:
-    image: redis:latest
-    restart: always
-    ports:
-      - 8082:6379
-    environment:
-      - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL
-    volumes:
-      - ./../redis-server/data:/bitnami/redis/data
     
