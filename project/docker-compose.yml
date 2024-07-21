@@ -20,8 +20,6 @@ services:
     build: 
       context: ./../mssql-init-service
       dockerfile: ./../mssql-init-service/mssql-init-service.dockerfile
-    depends_on:
-      - mssql-server
 
   mssql-service:
     build:
@@ -36,19 +34,4 @@ services:
     depends_on:
       mssql-init-service:
         condition: service_completed_successfully
-
-  mssql-server:
-    image: mcr.microsoft.com/mssql/server:2022-latest
-    user: root
-    ports:
-      - 8081:1433
-    environment:
-      - ACCEPT_EULA=Y
-      - MSSQL_SA_PASSWORD=OneVois1
-      - MSSQL_PID=Standard
-    volumes:
-      - ./../mssql-server/data:/var/opt/mssql/data
-      - ./../mssql-server/log:/var/opt/mssql/log
-      - ./../mssql-server/secret:/var/opt/mssql/secrets
-    restart: unless-stopped
     
