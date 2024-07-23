@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"mssql-service/internal/data"
 	"net/http"
 	"os"
 	"strconv"
@@ -13,17 +14,15 @@ import (
 )
 
 type Server struct {
-	port int
-
-	db database.Service
+	port   int
+	models data.Models
 }
 
 func NewServer() *http.Server {
 	port, _ := strconv.Atoi(os.Getenv("PORT"))
 	NewServer := &Server{
-		port: port,
-
-		db: database.New(),
+		port:   port,
+		models: data.NewModels(database.New().GetDbInstance()),
 	}
 
 	// Declare Server config
