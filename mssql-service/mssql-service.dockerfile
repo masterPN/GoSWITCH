@@ -2,6 +2,6 @@ FROM golang:1.22.5
 
 RUN mkdir /app
 
-COPY sqlApp /app
+COPY mssqlApp /app
 
-CMD [ "/app/sqlApp" ]
+CMD [ "/app/mssqlApp" ]
