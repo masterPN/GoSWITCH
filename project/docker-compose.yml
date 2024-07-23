@@ -14,11 +14,13 @@ services:
       - "host.docker.internal:host-gateway"
 
   mssql-service:
+    env_file:
+      - path: ./../mssql-service/.env
     build:
       context: ./../mssql-service
       dockerfile: ./../mssql-service/mssql-service.dockerfile
     ports:
-      - 8083:8080
+      - 8081:8080
     restart: always
     deploy:
       mode: replicated
