@@ -1,5 +1,5 @@
 ESL_BINARY=eslApp
-SQL_BINARY=sqlApp
+MSSQL_BINARY=mssqlApp
 
 ## up: starts all containers in the background without forcing build
 up:
@@ -30,5 +30,5 @@ build_esl:
 ## build_sql: builds the sql binary as a linux executable
 build_sql:
 	@echo "Building sql binary..."
-	cd ../mssql-service && env GOOS=linux CGO_ENABLED=0 go build -o ${SQL_BINARY} ./cmd/api
+	cd ../mssql-service && env GOOS=linux CGO_ENABLED=0 go build -o ${MSSQL_BINARY} ./cmd/api
 	@echo "Done!"
