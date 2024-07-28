@@ -47,3 +47,44 @@ clean up binary from the last build
 ```bash
 make clean
 ```
+
+## VSCode
+launch.json
+```json
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch Package",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "cmd/api/main.go",
+            "env": {
+                "PORT" : "8080",
+                "DB_HOST" : "",
+                "DB_PORT" : "1433",
+                "DB_DATABASE" : "",
+                "DB_USERNAME" : "",
+                "DB_PASSWORD" : "",
+            }
+        }
+    ]
+}
+```
+
+## ENV File
+.env at root folder
+```properties
+PORT=8080
+APP_ENV=local
+
+DB_HOST=
+DB_PORT=1433
+DB_DATABASE=
+DB_USERNAME=
+DB_PASSWORD=
+```
