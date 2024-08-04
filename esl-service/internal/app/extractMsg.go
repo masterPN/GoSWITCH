@@ -18,8 +18,8 @@ func Execute(client *Client, msg map[string]string) {
 		slog.Info(msg["variable_current_application_data"])
 
 		initConferenceData := strings.Split(msg["variable_current_application_data"], ", ")
-		client.BgApi(fmt.Sprintf("originate sofia/internal/%s:%v &conference(%s)",
-			initConferenceData[3], sipPort,
+		client.BgApi(fmt.Sprintf("originate {origination_caller_id_number=%s}sofia/internal/%s:%v &conference(%s)",
+			initConferenceData[2], initConferenceData[3], sipPort,
 			initConferenceData[2]))
 	}
 }
