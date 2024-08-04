@@ -4,7 +4,7 @@ import "database/sql"
 
 type Models struct {
 	RadiusData interface {
-		ExecuteRadiusOnestageValidate(prefix int, callingNumber int, destinationNumber int) (RadiusData, error)
+		ExecuteRadiusOnestageValidate(prefix string, callingNumber string, destinationNumber string) (RadiusData, error)
 	}
 }
 

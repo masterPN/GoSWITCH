@@ -3,7 +3,6 @@ package data
 import (
 	"context"
 	"database/sql"
-	"strconv"
 	"time"
 )
 
@@ -48,7 +47,7 @@ type RadiusDataModel struct {
 	DB *sql.DB
 }
 
-func (r RadiusDataModel) ExecuteRadiusOnestageValidate(prefix int, callingNumber int, destinationNumber int) (RadiusData, error) {
+func (r RadiusDataModel) ExecuteRadiusOnestageValidate(prefix string, callingNumber string, destinationNumber string) (RadiusData, error) {
 	query := "CALL RADIUS_ONESTAGE_VALIDATE(?, ?, ?, ?)"
 	stmt, err := r.DB.Prepare(query)
 	if err != nil {
@@ -57,7 +56,7 @@ func (r RadiusDataModel) ExecuteRadiusOnestageValidate(prefix int, callingNumber
 	defer stmt.Close()
 
 	args := []interface{}{
-		strconv.Itoa(prefix) + strconv.Itoa(destinationNumber),
+		prefix + destinationNumber,
 		prefix,
 		callingNumber,
 		destinationNumber,
