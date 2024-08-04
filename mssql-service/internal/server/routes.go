@@ -24,9 +24,9 @@ func (s *Server) HelloWorldHandler(c *gin.Context) {
 
 func (s *Server) ExecuteRadiusOnestageValidateHandler(c *gin.Context) {
 	var input struct {
-		Prefix            int `json:"prefix"`
-		CallingNumber     int `json:"callingNumber"`
-		DestinationNumber int `json:"destinationNumber"`
+		Prefix            string `json:"prefix"`
+		CallingNumber     string `json:"callingNumber"`
+		DestinationNumber string `json:"destinationNumber"`
 	}
 	c.BindJSON(&input)
 
