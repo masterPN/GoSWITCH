@@ -3,6 +3,7 @@ version: '3'
 services:
 
   esl-service:
+    env_file: "./../esl-service/.env"
     build:
       context: ./../esl-service
       dockerfile: ./../esl-service/esl-service.dockerfile
