@@ -1,8 +1,8 @@
 package main
 
 import (
+	"esl-service/internal/app"
 	"flag"
-	"fmt"
 	"runtime"
 	"strings"
 
@@ -36,8 +36,6 @@ func main() {
 
 	client.Send("events json ALL")
 
-	client.BgApi(fmt.Sprintf("originate %s %s", "sofia/internal/1001@127.0.0.1", "&socket(192.168.1.2:8084 async full)"))
-
 	for {
 		msg, err := client.ReadMessage()
 
@@ -50,7 +48,7 @@ func main() {
 			break
 		}
 
-		Debug("%s", msg)
+		app.Execute(client, msg.Headers)
 	}
 
 }
