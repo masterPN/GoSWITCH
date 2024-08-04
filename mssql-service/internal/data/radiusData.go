@@ -48,12 +48,10 @@ type RadiusDataModel struct {
 }
 
 func (r RadiusDataModel) ExecuteRadiusOnestageValidate(prefix string, callingNumber string, destinationNumber string) (RadiusData, error) {
-	query := "CALL RADIUS_ONESTAGE_VALIDATE(?, ?, ?, ?)"
-	stmt, err := r.DB.Prepare(query)
-	if err != nil {
-		return RadiusData{}, err
-	}
-	defer stmt.Close()
+	query := `EXEC RADIUS_ONESTAGE_VALIDATE @SESSION_ID = $1,
+											@ACCESS_NO 	= $2,
+											@ANINO 		= $3,
+											@DIDNO 		= $4;`
 
 	args := []interface{}{
 		prefix + destinationNumber,
@@ -65,10 +63,10 @@ func (r RadiusDataModel) ExecuteRadiusOnestageValidate(prefix string, callingNum
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	row := stmt.QueryRowContext(ctx, args...)
+	row := r.DB.QueryRowContext(ctx, query, args...)
 
 	var result RadiusData
-	err = row.Scan(&result)
+	err := row.Scan(&result.Lcode, &result.Status, &result.RouteType, &result.CallType, &result.AccountNum, &result.PrefixNo, &result.Dnis, &result.Pin, &result.FollowOnCall, &result.Trunk1, &result.Carrier1, &result.PlanCode1, &result.Plan1, &result.Duration1, &result.Trunk2, &result.Carrier2, &result.PlanCode2, &result.Plan2, &result.Duration2, &result.Trunk3, &result.Carrier3, &result.PlanCode3, &result.Plan3, &result.Duration3, &result.Trunk4, &result.Carrier4, &result.PlanCode4, &result.Plan4, &result.Duration4, &result.Trunk5, &result.Carrier5, &result.PlanCode5, &result.Plan5, &result.Duration5)
 	if err != nil {
 		return RadiusData{}, err
 	}
