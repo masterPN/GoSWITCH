@@ -25,10 +25,18 @@ func Execute(client *Client, msg map[string]string) {
 		initConferenceData := strings.Split(msg["variable_current_application_data"], ", ")
 
 		// Execute RadiusOnestageValidate
+		// postBody, _ := json.Marshal(map[string]string{
+		// 	"prefix":            "8899",
+		// 	"callingNumber":     initConferenceData[2],
+		// 	"destinationNumber": initConferenceData[3],
+		// })
+
+		// todo
+		// make this param as dynamic, not dummy.
 		postBody, _ := json.Marshal(map[string]string{
 			"prefix":            "8899",
-			"callingNumber":     initConferenceData[2],
-			"destinationNumber": initConferenceData[3],
+			"callingNumber":     "6627288000",
+			"destinationNumber": "0844385742",
 		})
 		resp, err := http.Post("http://mssql-service:8080/radiusOnestageValidate", "application/json", bytes.NewBuffer(postBody))
 		if err != nil {
