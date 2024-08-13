@@ -46,4 +46,14 @@ func (s *Server) ExecuteRadiusOnestageValidateHandler(c *gin.Context) {
 func (s *Server) ExecuteRadiusAccountingHandler(c *gin.Context) {
 	var input data.RadiusAccountingInput
 	c.BindJSON(&input)
+
+	result, err := s.models.RadiusAccountingData.ExecuteRadiusAccounting(input)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
 }
