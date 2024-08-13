@@ -13,6 +13,7 @@ type Models struct {
 
 func NewModels(db *sql.DB) Models {
 	return Models{
-		RadiusData: RadiusDataModel{DB: db},
+		RadiusData:           RadiusDataModel{DB: db},
+		RadiusAccountingData: RadiusAccountingDataModel{DB: db},
 	}
 }
