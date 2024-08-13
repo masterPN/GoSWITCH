@@ -1,8 +1,8 @@
 package server
 
 import (
+	"mssql-service/internal/data"
 	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -44,24 +44,6 @@ func (s *Server) ExecuteRadiusOnestageValidateHandler(c *gin.Context) {
 }
 
 func (s *Server) ExecuteRadiusAccountingHandler(c *gin.Context) {
-	var input struct {
-		ConfID       int       `json:"confID"`
-		AccessNo     string    `json:"accessNo"`
-		Anino        string    `json:"anino"`
-		DestNo       string    `json:"destNo"`
-		SubscriberNo string    `json:"subscriberNo"`
-		Pwd          string    `json:"pwd"`
-		SessionID    string    `json:"sessionID"`
-		CategoryID   string    `json:"categoryID"`
-		StartTime    time.Time `json:"startTime"`
-		TalkingTime  time.Time `json:"talkingTime"`
-		CallDuration int       `json:"callDuration"`
-		ReleaseCode  string    `json:"releaseCode"`
-		InTrunkID    int       `json:"inTrunkID"`
-		OutTrunkID   int       `json:"outTrunkID"`
-		ReasonID     int       `json:"reasonID"`
-		Prefix       string    `json:"prefix"`
-		LanguageCode string    `json:"languageCode"`
-	}
+	var input data.RadiusAccountingInput
 	c.BindJSON(&input)
 }
