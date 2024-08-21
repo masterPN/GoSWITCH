@@ -26,7 +26,8 @@ func Execute(client *Client, msg map[string]string) {
 		go initConferenceHandler(client, msg)
 	case strings.Contains(msg["Hangup-Cause"], "CALL_REJECTED") &&
 		strings.Contains(msg[eventCallingFunction], "switch_channel_perform_hangup"):
-		// todo Callee rejects the call
+		// Callee rejects the call
+		go rejectConferenceHandler(client, msg)
 	case strings.Contains(msg["Answer-State"], "answered") &&
 		strings.Contains(msg["Call-Direction"], "outbound") &&
 		strings.Contains(msg[eventCallingFunction], "switch_channel_perform_mark_answered"):
@@ -84,4 +85,8 @@ func initConferenceHandler(client *Client, msg map[string]string) {
 	client.BgApi(fmt.Sprintf("originate {origination_caller_id_number=%s}sofia/internal/%s:%v &conference(%s)",
 		initConferenceData[2], initConferenceData[3], sipPort,
 		initConferenceData[2]))
+}
+
+func rejectConferenceHandler(client *Client, msg map[string]string) {
+	panic("unimplemented")
 }
