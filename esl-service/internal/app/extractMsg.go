@@ -31,7 +31,8 @@ func Execute(client *Client, msg map[string]string) {
 	case strings.Contains(msg["Answer-State"], "answered") &&
 		strings.Contains(msg["Call-Direction"], "outbound") &&
 		strings.Contains(msg[eventCallingFunction], "switch_channel_perform_mark_answered"):
-		// todo Callee accepts the call
+		// Callee accepts the call
+		go joinConferenceHandler(msg)
 	case strings.Contains(msg["Answer-State"], "hangup") &&
 		strings.Contains(msg["Call-Direction"], "inbound") &&
 		strings.Contains(msg[eventCallingFunction], "switch_core_session_perform_destroy"):
@@ -89,4 +90,8 @@ func initConferenceHandler(client *Client, msg map[string]string) {
 
 func rejectConferenceHandler(client *Client, msg map[string]string) {
 	client.BgApi(fmt.Sprintf("conference %v kick all", msg["Caller-Caller-ID-Number"]))
+}
+
+func joinConferenceHandler(msg map[string]string) {
+	panic("unimplemented")
 }
