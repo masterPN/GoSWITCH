@@ -88,5 +88,5 @@ func initConferenceHandler(client *Client, msg map[string]string) {
 }
 
 func rejectConferenceHandler(client *Client, msg map[string]string) {
-	panic("unimplemented")
+	client.BgApi(fmt.Sprintf("conference %v kick all", msg["Caller-Caller-ID-Number"]))
 }
