@@ -43,3 +43,16 @@ services:
     volumes:
       - ./../redis-data:/data
     command: redis-server --requirepass ${password}
+
+  redis-service:
+    env_file:
+      - path: ./../redis-service/.env
+    build:
+      context: ./../redis-service
+      dockerfile: ./../redis-service/redis-service.dockerfile
+    ports:
+      - 8093:8080
+    restart: always
+    deploy:
+      mode: replicated
+      replicas: 1
