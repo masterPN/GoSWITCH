@@ -21,7 +21,7 @@ services:
       context: ./../mssql-service
       dockerfile: ./../mssql-service/mssql-service.dockerfile
     ports:
-      - 8081:8080
+      - 8091:8080
     restart: always
     deploy:
       mode: replicated
