@@ -8,6 +8,8 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
+type RadiusAccountingData struct{}
+
 type RadiusAccountingInput struct {
 	AccessNo     string `json:"accessNo"`
 	Anino        string `json:"anino"`
@@ -22,7 +24,7 @@ type RadiusAccountingDataModel struct {
 	DB *redis.Client
 }
 
-func (r RadiusAccountingDataModel) set(input RadiusAccountingInput) error {
+func (r RadiusAccountingDataModel) Set(input RadiusAccountingInput) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
