@@ -26,4 +26,20 @@ services:
     deploy:
       mode: replicated
       replicas: 1
-    
+
+  redis:
+    image: redis:7.2.5-alpine
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      interval: 1s
+      timeout: 3s
+      retries: 5
+    restart: always
+    ports:
+      - 8092:6379
+    environment:
+      - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL
+      - REDIS_PASSWORD=${password}
+    volumes:
+      - ./../redis-data:/data
+    command: redis-server --requirepass ${password}
