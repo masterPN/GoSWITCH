@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"redis-service/internal/data"
+	"redis-service/internal/database"
 	"strconv"
 	"time"
 
@@ -11,13 +13,15 @@ import (
 )
 
 type Server struct {
-	port int
+	port   int
+	models data.Models
 }
 
 func NewServer() *http.Server {
 	port, _ := strconv.Atoi(os.Getenv("PORT"))
 	NewServer := &Server{
-		port: port,
+		port:   port,
+		models: data.NewModels(database.New().GetDbInstance()),
 	}
 
 	// Declare Server config
