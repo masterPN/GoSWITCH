@@ -37,7 +37,7 @@ func Execute(client *Client, msg map[string]string) {
 	case strings.Contains(msg["Answer-State"], "hangup") &&
 		strings.Contains(msg["Call-Direction"], "inbound") &&
 		strings.Contains(msg[eventCallingFunction], "switch_core_session_perform_destroy"):
-		// todo Caller or Callee hangup
+		go endConferenceHandler(client, msg)
 	}
 }
 
@@ -119,4 +119,8 @@ func joinConferenceHandler(msg map[string]string) {
 		log.Printf("POST http://redis-service:8080/saveRadiusAccountingData - %s\n", err)
 		return
 	}
+}
+
+func endConferenceHandler(client *Client, msg map[string]string) {
+	panic("unimplemented")
 }
