@@ -24,7 +24,7 @@ func (s *Server) HelloWorldHandler(c *gin.Context) {
 }
 
 func (s *Server) SaveRadiusAccountingDataHandler(c *gin.Context) {
-	var input data.RadiusAccountingInput
+	var input data.RadiusAccountingData
 	c.BindJSON(&input)
 
 	err := s.models.RadiusAccountingData.Set(input)
