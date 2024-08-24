@@ -4,7 +4,8 @@ import "github.com/go-redis/redis/v8"
 
 type Models struct {
 	RadiusAccountingData interface {
-		Set(input RadiusAccountingInput) error
+		Set(input RadiusAccountingData) error
+		Pop(anino string) (RadiusAccountingData, error)
 	}
 }
 
