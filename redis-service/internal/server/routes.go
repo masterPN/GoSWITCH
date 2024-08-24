@@ -12,6 +12,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	r.GET("/", s.HelloWorldHandler)
 	r.POST("/saveRadiusAccountingData", s.SaveRadiusAccountingDataHandler)
+	r.GET("/popRadiusAccountingData/:anino", s.PopRadiusAccountingDataHandler)
 
 	return r
 }
@@ -36,4 +37,19 @@ func (s *Server) SaveRadiusAccountingDataHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, nil)
+}
+
+func (s *Server) PopRadiusAccountingDataHandler(c *gin.Context) {
+	anino := c.Param("anino")
+
+	radiusAccountingData, err := s.models.RadiusAccountingData.Pop(anino)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":                err.Error(),
+			"radiusAccountingData": radiusAccountingData,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, radiusAccountingData)
 }
