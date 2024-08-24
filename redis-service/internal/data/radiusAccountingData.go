@@ -78,6 +78,7 @@ func (r RadiusAccountingDataModel) Pop(anino string) (RadiusAccountingData, erro
 		fmt.Printf("Key %s was deleted successfully.\n", anino)
 	} else {
 		fmt.Printf("Key %s does not exist.\n", anino)
+		return radiusAccountingData, fmt.Errorf("Key %s does not exist.\n", anino)
 	}
 
 	return radiusAccountingData, nil
