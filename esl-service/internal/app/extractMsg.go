@@ -125,8 +125,6 @@ func joinConferenceHandler(msg map[string]string) {
 func endConferenceHandler(client *Client, msg map[string]string) {
 	go client.BgApi(fmt.Sprintf("conference %v kick all", msg["variable_conference_name"]))
 
-	hangupTimeUnix, _ := strconv.Atoi(msg["Caller-Channel-Hangup-Time"])
-	hangupTime := time.UnixMicro(int64(hangupTimeUnix))
 	// todo: anino = conference room
 	anino := "612701681"
 
@@ -143,8 +141,18 @@ func endConferenceHandler(client *Client, msg map[string]string) {
 	var respBody data.RadiusAccountingInput
 	json.Unmarshal(respBodyByte, &respBody)
 
-	talkingTime, _ := time.Parse(timeFormat, respBody.TalkingTime)
-	respBody.CallDuration = int(hangupTime.Sub(talkingTime).Seconds())
+	// todo: make variables dynamic
+	respBody.ConfID = 65716
+	respBody.Pwd = ""
+	respBody.CategoryID = "N"
+	respBody.CallDuration, _ = strconv.Atoi(msg["variable_duration"])
+	respBody.ReleaseCode = "16"
+	respBody.InTrunkID = 25
+	respBody.OutTrunkID = 601
+	respBody.ReasonID = 0
+	respBody.Prefix = ""
+	respBody.LanguageCode = ""
 
-	// todo: execute radiusaccounting
+	// todo: send post request - executeRadiusAccounting
+
 }
