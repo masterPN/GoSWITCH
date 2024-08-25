@@ -153,6 +153,9 @@ func endConferenceHandler(client *Client, msg map[string]string) {
 	respBody.Prefix = ""
 	respBody.LanguageCode = ""
 
-	// todo: send post request - executeRadiusAccounting
-
+	resp, err = http.Post("http://mssql-service:8080/radiusAccounting", "application/json", respBody)
+	if err != nil {
+		log.Printf("POST http://mssql-service:8080/radiusAccounting - %s\n", err)
+		return
+	}
 }
