@@ -19,7 +19,7 @@ import (
 
 const (
 	eventCallingFunction = "Event-Calling-Function"
-	timeFormat           = "02/01/2006 15:04:05"
+	timeFormat           = "01/02/2006 15:04:05"
 )
 
 func Execute(client *Client, msg map[string]string) {
