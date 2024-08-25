@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"mssql-service/internal/data"
 	"net/http"
 
@@ -34,6 +35,7 @@ func (s *Server) ExecuteRadiusOnestageValidateHandler(c *gin.Context) {
 
 	result, err := s.models.RadiusData.ExecuteRadiusOnestageValidate(input.Prefix, input.CallingNumber, input.DestinationNumber)
 	if err != nil {
+		c.Error(fmt.Errorf("ExecuteRadiusOnestageValidateHandler with %q - %q", input, err.Error()))
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
@@ -49,6 +51,7 @@ func (s *Server) ExecuteRadiusAccountingHandler(c *gin.Context) {
 
 	result, err := s.models.RadiusAccountingData.ExecuteRadiusAccounting(input)
 	if err != nil {
+		c.Error(fmt.Errorf("ExecuteRadiusAccountingHandler with %q - %q", input, err.Error()))
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})

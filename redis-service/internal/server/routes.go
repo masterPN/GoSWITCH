@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"net/http"
 	"redis-service/internal/data"
 
@@ -30,6 +31,7 @@ func (s *Server) SaveRadiusAccountingDataHandler(c *gin.Context) {
 
 	err := s.models.RadiusAccountingData.Set(input)
 	if err != nil {
+		c.Error(fmt.Errorf("SaveRadiusAccountingDataHandler with %q - %q", input, err.Error()))
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
@@ -44,6 +46,7 @@ func (s *Server) PopRadiusAccountingDataHandler(c *gin.Context) {
 
 	radiusAccountingData, err := s.models.RadiusAccountingData.Pop(anino)
 	if err != nil {
+		c.Error(fmt.Errorf("PopRadiusAccountingDataHandler with %q - %q", anino, err.Error()))
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error":                err.Error(),
 			"radiusAccountingData": radiusAccountingData,
