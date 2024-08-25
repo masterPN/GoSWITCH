@@ -19,6 +19,7 @@ import (
 
 const (
 	eventCallingFunction = "Event-Calling-Function"
+	timeFormat           = "02/01/2006 15:04:05"
 )
 
 func Execute(client *Client, msg map[string]string) {
@@ -110,8 +111,8 @@ func joinConferenceHandler(msg map[string]string) {
 		"destNo":       "66812424273",
 		"subscriberNo": "P100000000000505",
 		"sessionID":    "1723281626000100180",
-		"startTime":    startTime.String(),
-		"talkingTime":  talkingTime.String(),
+		"startTime":    startTime.Format(timeFormat),
+		"talkingTime":  talkingTime.Format(timeFormat),
 	})
 
 	_, err := http.Post("http://redis-service:8080/saveRadiusAccountingData", "application/json", bytes.NewBuffer(postBody))
@@ -122,5 +123,28 @@ func joinConferenceHandler(msg map[string]string) {
 }
 
 func endConferenceHandler(client *Client, msg map[string]string) {
-	panic("unimplemented")
+	go client.BgApi(fmt.Sprintf("conference %v kick all", msg["variable_conference_name"]))
+
+	hangupTimeUnix, _ := strconv.Atoi(msg["Caller-Channel-Hangup-Time"])
+	hangupTime := time.UnixMicro(int64(hangupTimeUnix))
+	// todo: anino = conference room
+	anino := "612701681"
+
+	resp, err := http.Get(fmt.Sprintf("http://redis-service:8080/popRadiusAccountingData/%s", anino))
+	if err != nil {
+		log.Printf("GET http://redis-service:8080/popRadiusAccountingData/%s - %s\n", anino, err)
+		return
+	}
+	defer resp.Body.Close()
+	respBodyByte, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("GET http://redis-service:8080/popRadiusAccountingData/%s: could not reead response body - %s\n", anino, err)
+	}
+	var respBody data.RadiusAccountingInput
+	json.Unmarshal(respBodyByte, &respBody)
+
+	talkingTime, _ := time.Parse(timeFormat, respBody.TalkingTime)
+	respBody.CallDuration = int(hangupTime.Sub(talkingTime).Seconds())
+
+	// todo: execute radiusaccounting
 }
