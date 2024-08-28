@@ -8,25 +8,34 @@ import (
 )
 
 const (
-	eventCallingFunction = "Event-Calling-Function"
+	VariableCurrentApplicationData = "variable_current_application_data"
+	HangupCause                    = "Hangup-Cause"
+	AnswerState                    = "Answer-State"
+	CallDirection                  = "Call-Direction"
+	EventCallingFunction           = "Event-Calling-Function"
 )
 
 func Execute(client *Client, msg map[string]string) {
+	eventFunction := msg[EventCallingFunction]
+	applicationData := msg[VariableCurrentApplicationData]
+	hangupCause := msg[HangupCause]
+	answerState := msg[AnswerState]
+	callDirection := msg[CallDirection]
+
 	switch {
-	case strings.Contains(msg["variable_current_application_data"], "initConference"):
+	case strings.Contains(applicationData, "initConference"):
 		go handlers.InitConferenceHandler(client, msg)
-	case strings.Contains(msg["Hangup-Cause"], "CALL_REJECTED") &&
-		strings.Contains(msg[eventCallingFunction], "switch_channel_perform_hangup"):
+	case strings.Contains(hangupCause, "CALL_REJECTED") && strings.Contains(eventFunction, "switch_channel_perform_hangup"):
 		// Callee rejects the call
 		go handlers.RejectConferenceHandler(client, msg)
-	case strings.Contains(msg["Answer-State"], "answered") &&
-		strings.Contains(msg["Call-Direction"], "outbound") &&
-		strings.Contains(msg[eventCallingFunction], "switch_channel_perform_mark_answered"):
+	case strings.Contains(answerState, "answered") &&
+		strings.Contains(callDirection, "outbound") &&
+		strings.Contains(eventFunction, "switch_channel_perform_mark_answered"):
 		// Callee accepts the call
 		go handlers.JoinConferenceHandler(msg)
-	case strings.Contains(msg["Answer-State"], "hangup") &&
-		strings.Contains(msg["Call-Direction"], "inbound") &&
-		strings.Contains(msg[eventCallingFunction], "switch_core_session_perform_destroy"):
+	case strings.Contains(answerState, "hangup") &&
+		strings.Contains(callDirection, "inbound") &&
+		strings.Contains(eventFunction, "switch_core_session_perform_destroy"):
 		go handlers.EndConferenceHandler(client, msg)
 	}
 }
