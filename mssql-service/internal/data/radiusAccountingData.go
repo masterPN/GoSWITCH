@@ -7,9 +7,9 @@ import (
 )
 
 type RadiusAccountingData struct {
-	Status      string `json:"STATUS"`
-	ConfID      int    `json:"CONF_ID"`
-	RemainMoney int    `json:"REMAINMONEY"`
+	Status      string  `json:"STATUS"`
+	ConfID      int     `json:"CONF_ID"`
+	RemainMoney float64 `json:"REMAINMONEY"`
 }
 
 type RadiusAccountingInput struct {
