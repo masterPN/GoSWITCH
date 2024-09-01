@@ -1,5 +1,6 @@
 ESL_BINARY=eslApp
 MSSQL_BINARY=mssqlApp
+REDIS_BINARY=redisApp
 
 ## up: starts all containers in the background without forcing build
 up:
@@ -8,7 +9,7 @@ up:
 	@echo "Docker images started!"
 
 ## up_build: stops docker compose (if running), builds all projects and starts docker compose
-up_build: build_esl build_sql
+up_build: build_esl build_sql build_redis
 	@echo "Stopping docker images (if running...)"
 	docker compose down
 	@echo "Building (when required) and starting docker images..."
@@ -32,3 +33,10 @@ build_sql:
 	@echo "Building sql binary..."
 	cd ../mssql-service && env GOOS=linux CGO_ENABLED=0 go build -o ${MSSQL_BINARY} ./cmd/api
 	@echo "Done!"
+
+## build_redis: builds the redis binary as a linux executable
+build_redis:
+	@echo "Building redis binary..."
+	cd ../redis-service && env GOOS=linux CGO_ENABLED=0 go build -o ${REDIS_BINARY} ./cmd/api
+	@echo "Done!"
+	

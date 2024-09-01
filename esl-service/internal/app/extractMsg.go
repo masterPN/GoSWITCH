@@ -1,25 +1,41 @@
 package app
 
 import (
-	"fmt"
-	"log/slog"
-	"os"
-	"strconv"
+	"esl-service/internal/app/handlers"
 	"strings"
 
 	. "github.com/0x19/goesl"
 )
 
+const (
+	VariableCurrentApplicationData = "variable_current_application_data"
+	HangupCause                    = "Hangup-Cause"
+	AnswerState                    = "Answer-State"
+	CallDirection                  = "Call-Direction"
+	EventCallingFunction           = "Event-Calling-Function"
+)
+
 func Execute(client *Client, msg map[string]string) {
-	sipPort, _ := strconv.Atoi(os.Getenv("SIP_PORT"))
+	eventFunction := msg[EventCallingFunction]
+	applicationData := msg[VariableCurrentApplicationData]
+	hangupCause := msg[HangupCause]
+	answerState := msg[AnswerState]
+	callDirection := msg[CallDirection]
 
-	if strings.Contains(msg["variable_current_application_data"], "initConference") {
-		// Call is starting.
-		slog.Info(msg["variable_current_application_data"])
-
-		initConferenceData := strings.Split(msg["variable_current_application_data"], ", ")
-		client.BgApi(fmt.Sprintf("originate {origination_caller_id_number=%s}sofia/internal/%s:%v &conference(%s)",
-			initConferenceData[2], initConferenceData[3], sipPort,
-			initConferenceData[2]))
+	switch {
+	case strings.Contains(applicationData, "initConference"):
+		go handlers.InitConferenceHandler(client, msg)
+	case strings.Contains(hangupCause, "CALL_REJECTED") && strings.Contains(eventFunction, "switch_channel_perform_hangup"):
+		// Callee rejects the call
+		go handlers.RejectConferenceHandler(client, msg)
+	case strings.Contains(answerState, "answered") &&
+		strings.Contains(callDirection, "outbound") &&
+		strings.Contains(eventFunction, "switch_channel_perform_mark_answered"):
+		// Callee accepts the call
+		go handlers.JoinConferenceHandler(msg)
+	case strings.Contains(answerState, "hangup") &&
+		strings.Contains(callDirection, "inbound") &&
+		strings.Contains(eventFunction, "switch_core_session_perform_destroy"):
+		go handlers.EndConferenceHandler(client, msg)
 	}
 }
