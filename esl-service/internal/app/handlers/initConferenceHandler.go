@@ -42,9 +42,9 @@ func InitConferenceHandler(client *Client, msg map[string]string) {
 	var respBody data.RadiusData
 	json.Unmarshal(respBodyByte, &respBody)
 
-	// Break if status != 0
+	// Break if status > 2
 	// Kick A leg
-	if respBody.Status != 0 {
+	if respBody.Status > 2 {
 		client.BgApi(fmt.Sprintf("conference %v kick all", strings.Split(initConferenceData[2], "@")[0]))
 		log.Printf("status from RadiusOnestageValidate is %v\n", respBody.Status)
 		return
