@@ -51,7 +51,7 @@ func InitConferenceHandler(client *Client, msg map[string]string) {
 	}
 
 	// Calling B leg
-	client.BgApi(fmt.Sprintf("originate {origination_caller_id_number=%s}sofia/internal/%s:%v &conference(%s)",
+	client.BgApi(fmt.Sprintf("originate {origination_caller_id_number=%s}sofia/external/%s:%v &conference(%s)",
 		initConferenceData[2], initConferenceData[3], sipPort,
 		initConferenceData[2]))
 }
