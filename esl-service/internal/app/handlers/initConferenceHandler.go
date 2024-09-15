@@ -18,6 +18,7 @@ import (
 
 func InitConferenceHandler(client *Client, msg map[string]string) {
 	sipPort, _ := strconv.Atoi(os.Getenv("SIP_PORT"))
+	externalDomain := os.Getenv("EXTERNAL_DOMAIN")
 
 	// Call is starting.
 	slog.Info(msg["variable_current_application_data"])
@@ -51,7 +52,7 @@ func InitConferenceHandler(client *Client, msg map[string]string) {
 	}
 
 	// Calling B leg
-	client.BgApi(fmt.Sprintf("originate {origination_caller_id_number=%s}sofia/external/%s:%v &conference(%s)",
-		initConferenceData[2], initConferenceData[3], sipPort,
+	client.BgApi(fmt.Sprintf("originate {origination_caller_id_number=%s}sofia/external/%s@%s:%v &conference(%s)",
+		initConferenceData[2], initConferenceData[3], externalDomain, sipPort,
 		initConferenceData[2]))
 }
