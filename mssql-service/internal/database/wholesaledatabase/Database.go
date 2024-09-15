@@ -1,4 +1,4 @@
-package database
+package wholesaledatabase
 
 import (
 	"context"
@@ -31,11 +31,11 @@ type service struct {
 }
 
 var (
-	dbname     = os.Getenv("DB_DATABASE")
-	password   = os.Getenv("DB_PASSWORD")
-	username   = os.Getenv("DB_USERNAME")
-	port       = os.Getenv("DB_PORT")
-	host       = os.Getenv("DB_HOST")
+	dbname     = os.Getenv("WHOLESALE_DB_DATABASE")
+	password   = os.Getenv("WHOLESALE_DB_PASSWORD")
+	username   = os.Getenv("WHOLESALE_DB_USERNAME")
+	port       = os.Getenv("WHOLESALE_DB_PORT")
+	host       = os.Getenv("WHOLESALE_DB_HOST")
 	dbInstance *service
 )
 
@@ -79,7 +79,7 @@ func (s *service) Health() map[string]string {
 	if err != nil {
 		stats["status"] = "down"
 		stats["error"] = fmt.Sprintf("db down: %v", err)
-		log.Fatalf(fmt.Sprintf("db down: %v", err)) // Log the error and terminate the program
+		log.Fatalf("db down: %v", err) // Log the error and terminate the program
 		return stats
 	}
 

@@ -2,7 +2,7 @@ package server
 
 import (
 	"fmt"
-	"mssql-service/internal/data"
+	"mssql-service/internal/data/onevoisdata"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -12,6 +12,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	r := gin.Default()
 
 	r.GET("/", s.HelloWorldHandler)
+	r.GET("/operatorRouting", s.GetOperatorRoutingHandler)
 	r.POST("/radiusOnestageValidate", s.ExecuteRadiusOnestageValidateHandler)
 	r.POST("/radiusAccounting", s.ExecuteRadiusAccountingHandler)
 
@@ -33,7 +34,7 @@ func (s *Server) ExecuteRadiusOnestageValidateHandler(c *gin.Context) {
 	}
 	c.BindJSON(&input)
 
-	result, err := s.models.RadiusData.ExecuteRadiusOnestageValidate(input.Prefix, input.CallingNumber, input.DestinationNumber)
+	result, err := s.onevoisModels.RadiusOnestageValidateData.ExecuteRadiusOnestageValidate(input.Prefix, input.CallingNumber, input.DestinationNumber)
 	if err != nil {
 		c.Error(fmt.Errorf("ExecuteRadiusOnestageValidateHandler with %q - %q", input, err.Error()))
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -46,12 +47,27 @@ func (s *Server) ExecuteRadiusOnestageValidateHandler(c *gin.Context) {
 }
 
 func (s *Server) ExecuteRadiusAccountingHandler(c *gin.Context) {
-	var input data.RadiusAccountingInput
+	var input onevoisdata.RadiusAccountingInput
 	c.BindJSON(&input)
 
-	result, err := s.models.RadiusAccountingData.ExecuteRadiusAccounting(input)
+	result, err := s.onevoisModels.RadiusAccountingData.ExecuteRadiusAccounting(input)
 	if err != nil {
 		c.Error(fmt.Errorf("ExecuteRadiusAccountingHandler with %q - %q", input, err.Error()))
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
+}
+
+func (s *Server) GetOperatorRoutingHandler(c *gin.Context) {
+	number := c.Query("number")
+
+	result, err := s.wholesaleModels.ImgCdrOperatorRoutingData.GetFirstImgCdrOperatorRoutingByNumber(number)
+	if err != nil {
+		c.Error(fmt.Errorf("GetOperatorRoutingHandler with %q - %q", number, err.Error()))
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
