@@ -12,6 +12,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	r := gin.Default()
 
 	r.GET("/", s.HelloWorldHandler)
+	r.GET("/operatorRouting", s.GetOperatorRoutingHandler)
 	r.POST("/radiusOnestageValidate", s.ExecuteRadiusOnestageValidateHandler)
 	r.POST("/radiusAccounting", s.ExecuteRadiusAccountingHandler)
 
@@ -52,6 +53,21 @@ func (s *Server) ExecuteRadiusAccountingHandler(c *gin.Context) {
 	result, err := s.onevoisModels.RadiusAccountingData.ExecuteRadiusAccounting(input)
 	if err != nil {
 		c.Error(fmt.Errorf("ExecuteRadiusAccountingHandler with %q - %q", input, err.Error()))
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
+}
+
+func (s *Server) GetOperatorRoutingHandler(c *gin.Context) {
+	number := c.Query("number")
+
+	result, err := s.wholesaleModels.ImgCdrOperatorRoutingData.GetFirstImgCdrOperatorRoutingByNumber(number)
+	if err != nil {
+		c.Error(fmt.Errorf("GetOperatorRoutingHandler with %q - %q", number, err.Error()))
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
