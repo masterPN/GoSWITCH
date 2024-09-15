@@ -33,7 +33,7 @@ func (s *Server) ExecuteRadiusOnestageValidateHandler(c *gin.Context) {
 	}
 	c.BindJSON(&input)
 
-	result, err := s.onevoisModels.RadiusData.ExecuteRadiusOnestageValidate(input.Prefix, input.CallingNumber, input.DestinationNumber)
+	result, err := s.onevoisModels.RadiusOnestageValidateData.ExecuteRadiusOnestageValidate(input.Prefix, input.CallingNumber, input.DestinationNumber)
 	if err != nil {
 		c.Error(fmt.Errorf("ExecuteRadiusOnestageValidateHandler with %q - %q", input, err.Error()))
 		c.JSON(http.StatusBadRequest, gin.H{

@@ -3,8 +3,8 @@ package onevoisdata
 import "database/sql"
 
 type Models struct {
-	RadiusData interface {
-		ExecuteRadiusOnestageValidate(prefix string, callingNumber string, destinationNumber string) (RadiusData, error)
+	RadiusOnestageValidateData interface {
+		ExecuteRadiusOnestageValidate(prefix string, callingNumber string, destinationNumber string) (RadiusOnestageValidateData, error)
 	}
 	RadiusAccountingData interface {
 		ExecuteRadiusAccounting(input RadiusAccountingInput) (RadiusAccountingData, error)
@@ -13,7 +13,7 @@ type Models struct {
 
 func NewModels(db *sql.DB) Models {
 	return Models{
-		RadiusData:           RadiusDataModel{DB: db},
-		RadiusAccountingData: RadiusAccountingDataModel{DB: db},
+		RadiusOnestageValidateData: RadiusOnestageValidateDataModel{DB: db},
+		RadiusAccountingData:       RadiusAccountingDataModel{DB: db},
 	}
 }
