@@ -2,7 +2,7 @@ package server
 
 import (
 	"fmt"
-	"mssql-service/internal/data"
+	"mssql-service/internal/data/onevoisdata"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -33,7 +33,7 @@ func (s *Server) ExecuteRadiusOnestageValidateHandler(c *gin.Context) {
 	}
 	c.BindJSON(&input)
 
-	result, err := s.models.RadiusData.ExecuteRadiusOnestageValidate(input.Prefix, input.CallingNumber, input.DestinationNumber)
+	result, err := s.onevoisModels.RadiusData.ExecuteRadiusOnestageValidate(input.Prefix, input.CallingNumber, input.DestinationNumber)
 	if err != nil {
 		c.Error(fmt.Errorf("ExecuteRadiusOnestageValidateHandler with %q - %q", input, err.Error()))
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -46,10 +46,10 @@ func (s *Server) ExecuteRadiusOnestageValidateHandler(c *gin.Context) {
 }
 
 func (s *Server) ExecuteRadiusAccountingHandler(c *gin.Context) {
-	var input data.RadiusAccountingInput
+	var input onevoisdata.RadiusAccountingInput
 	c.BindJSON(&input)
 
-	result, err := s.models.RadiusAccountingData.ExecuteRadiusAccounting(input)
+	result, err := s.onevoisModels.RadiusAccountingData.ExecuteRadiusAccounting(input)
 	if err != nil {
 		c.Error(fmt.Errorf("ExecuteRadiusAccountingHandler with %q - %q", input, err.Error()))
 		c.JSON(http.StatusBadRequest, gin.H{

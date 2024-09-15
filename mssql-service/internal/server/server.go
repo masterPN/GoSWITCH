@@ -2,27 +2,26 @@ package server
 
 import (
 	"fmt"
-	"mssql-service/internal/data"
+	"mssql-service/internal/data/onevoisdata"
+	"mssql-service/internal/database/onevoisdatabase"
 	"net/http"
 	"os"
 	"strconv"
 	"time"
 
 	_ "github.com/joho/godotenv/autoload"
-
-	"mssql-service/internal/database"
 )
 
 type Server struct {
-	port   int
-	models data.Models
+	port          int
+	onevoisModels onevoisdata.Models
 }
 
 func NewServer() *http.Server {
 	port, _ := strconv.Atoi(os.Getenv("PORT"))
 	NewServer := &Server{
-		port:   port,
-		models: data.NewModels(database.New().GetDbInstance()),
+		port:          port,
+		onevoisModels: onevoisdata.NewModels(onevoisdatabase.New().GetDbInstance()),
 	}
 
 	// Declare Server config

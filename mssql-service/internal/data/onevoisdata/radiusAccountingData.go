@@ -1,4 +1,4 @@
-package data
+package onevoisdata
 
 import (
 	"context"
