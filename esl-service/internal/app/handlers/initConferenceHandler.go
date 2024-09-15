@@ -51,6 +51,11 @@ func InitConferenceHandler(client *Client, msg map[string]string) {
 		return
 	}
 
+	// Prepare destination number, remove first 0 if contain
+	if len(initConferenceData[3]) > 0 && initConferenceData[3][0] == '0' {
+		initConferenceData[3] = initConferenceData[3][1:]
+	}
+
 	// Calling B leg
 	client.BgApi(fmt.Sprintf("originate {origination_caller_id_number=%s}sofia/external/%s@%s:%v &conference(%s)",
 		initConferenceData[2], initConferenceData[3], externalDomain, sipPort,
