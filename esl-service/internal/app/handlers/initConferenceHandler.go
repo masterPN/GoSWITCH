@@ -40,7 +40,7 @@ func InitConferenceHandler(client *Client, msg map[string]string) {
 	if err != nil {
 		log.Printf("POST http://mssql-service:8080/radiusOnestageValidate: could not reead response body - %s\n", err)
 	}
-	var respBody data.RadiusData
+	var respBody data.RadiusOnestageValidateData
 	json.Unmarshal(respBodyByte, &respBody)
 
 	// Break if status > 2
