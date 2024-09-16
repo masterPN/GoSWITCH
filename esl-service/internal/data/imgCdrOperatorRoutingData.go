@@ -5,10 +5,10 @@ import "time"
 type ImgCdrOperatorRoutingData struct {
 	RoutingPrefix              string     `json:"RoutingPrefix"`
 	BaseOperator               *string    `json:"BaseOperator"`
-	BaseClass1                 *int       `json:"BaseClass1"`
-	BaseClass2                 *int       `json:"BaseClass2"`
-	BaseClass3                 *int       `json:"BaseClass3"`
-	BaseClass4                 *int       `json:"BaseClass4"`
+	BaseClass1                 int        `json:"BaseClass1"`
+	BaseClass2                 int        `json:"BaseClass2"`
+	BaseClass3                 int        `json:"BaseClass3"`
+	BaseClass4                 int        `json:"BaseClass4"`
 	BaseClassCreationDate      *time.Time `json:"BaseClassCreationDate"`
 	CurrentClass1              *int       `json:"CurrentClass1"`
 	CurrentClass2              *int       `json:"CurrentClass2"`

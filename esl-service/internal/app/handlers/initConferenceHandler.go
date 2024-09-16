@@ -72,7 +72,7 @@ func InitConferenceHandler(client *Client, msg map[string]string) {
 	var imgCdrOperatorRoutingResponse data.ImgCdrOperatorRoutingData
 	json.Unmarshal(respBodyByte, &imgCdrOperatorRoutingResponse)
 
-	baseClassResponse := [4]int{*imgCdrOperatorRoutingResponse.BaseClass1, *imgCdrOperatorRoutingResponse.BaseClass2, *imgCdrOperatorRoutingResponse.BaseClass3, *imgCdrOperatorRoutingResponse.BaseClass4}
+	baseClassResponse := [4]int{imgCdrOperatorRoutingResponse.BaseClass1, imgCdrOperatorRoutingResponse.BaseClass2, imgCdrOperatorRoutingResponse.BaseClass3, imgCdrOperatorRoutingResponse.BaseClass4}
 	for _, response := range baseClassResponse {
 		// skip if nil
 		if response == 0 {
