@@ -19,6 +19,8 @@ import (
 func InitConferenceHandler(client *Client, msg map[string]string) {
 	sipPort, _ := strconv.Atoi(os.Getenv("SIP_PORT"))
 	externalDomain := os.Getenv("EXTERNAL_DOMAIN")
+	baseClasses := strings.Split(os.Getenv("BASE_CLASS"), ",")
+	operatorPrefixes := strings.Split(os.Getenv("OPERATOR_PREFIX"), ",")
 
 	// Call is starting.
 	slog.Info(msg["variable_current_application_data"])
@@ -40,14 +42,14 @@ func InitConferenceHandler(client *Client, msg map[string]string) {
 	if err != nil {
 		log.Printf("POST http://mssql-service:8080/radiusOnestageValidate: could not reead response body - %s\n", err)
 	}
-	var respBody data.RadiusOnestageValidateData
-	json.Unmarshal(respBodyByte, &respBody)
+	var radiusOnestageValidateResponse data.RadiusOnestageValidateData
+	json.Unmarshal(respBodyByte, &radiusOnestageValidateResponse)
 
 	// Break if status > 2
 	// Kick A leg
-	if respBody.Status > 2 {
+	if radiusOnestageValidateResponse.Status > 2 {
 		client.BgApi(fmt.Sprintf("conference %v kick all", strings.Split(initConferenceData[2], "@")[0]))
-		log.Printf("status from RadiusOnestageValidate is %v\n", respBody.Status)
+		log.Printf("status from RadiusOnestageValidate is %v\n", radiusOnestageValidateResponse.Status)
 		return
 	}
 
@@ -56,8 +58,40 @@ func InitConferenceHandler(client *Client, msg map[string]string) {
 		initConferenceData[3] = initConferenceData[3][1:]
 	}
 
-	// Calling B leg
-	client.BgApi(fmt.Sprintf("originate {origination_caller_id_number=%s}sofia/external/%s@%s:%v &conference(%s)",
-		initConferenceData[2], initConferenceData[3], externalDomain, sipPort,
-		initConferenceData[2]))
+	// Get Operator by Number
+	resp, err = http.Get(fmt.Sprintf("http://mssql-service:8080/operatorRouting?number=%s", initConferenceData[3]))
+	if err != nil {
+		log.Printf("GET http://mssql-service:8080/operatorRouting?number=%s - %s\n", initConferenceData[3], err)
+		return
+	}
+	defer resp.Body.Close()
+	respBodyByte, err = io.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("GET http://mssql-service:8080/operatorRouting?number=%s: could not reead response body - %s\n", initConferenceData[3], err)
+	}
+	var imgCdrOperatorRoutingResponse data.ImgCdrOperatorRoutingData
+	json.Unmarshal(respBodyByte, &imgCdrOperatorRoutingResponse)
+
+	baseClassResponse := [4]int{*imgCdrOperatorRoutingResponse.BaseClass1, *imgCdrOperatorRoutingResponse.BaseClass2, *imgCdrOperatorRoutingResponse.BaseClass3, *imgCdrOperatorRoutingResponse.BaseClass4}
+	for _, response := range baseClassResponse {
+		// skip if nil
+		if response == 0 {
+			continue
+		}
+
+		for j, baseClass := range baseClasses {
+			if strconv.Itoa(response) == baseClass {
+				// Calling B leg
+				Debug("originate {origination_caller_id_number=%s}sofia/external/%s%s@%s:%v &conference(%s)",
+					initConferenceData[2], operatorPrefixes[j], initConferenceData[3], externalDomain, sipPort,
+					initConferenceData[2])
+				client.BgApi(fmt.Sprintf("originate {origination_caller_id_number=%s}sofia/external/%s%s@%s:%v &conference(%s)",
+					initConferenceData[2], operatorPrefixes[j], initConferenceData[3], externalDomain, sipPort,
+					initConferenceData[2]))
+
+				return
+			}
+		}
+	}
+
 }
