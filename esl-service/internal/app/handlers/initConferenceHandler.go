@@ -55,7 +55,8 @@ func InitConferenceHandler(client *Client, msg map[string]string) {
 
 	// Prepare destination number, remove first 0 if contain
 	if len(initConferenceData[3]) > 0 && initConferenceData[3][0] == '0' {
-		initConferenceData[3] = initConferenceData[3][1:]
+		// 66 stands for Thailand
+		initConferenceData[3] = "66" + initConferenceData[3][1:]
 	}
 
 	// Get Operator by Number
