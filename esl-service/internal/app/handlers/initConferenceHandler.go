@@ -12,6 +12,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	. "github.com/0x19/goesl"
 )
@@ -89,6 +90,28 @@ func InitConferenceHandler(client *Client, msg map[string]string) {
 				client.BgApi(fmt.Sprintf("originate {origination_caller_id_number=%s}sofia/external/%s%s@%s:%v &conference(%s)",
 					initConferenceData[2], operatorPrefixes[j], initConferenceData[3], externalDomain, sipPort,
 					initConferenceData[2]))
+
+				// Check B leg response within 30 seconds
+				startTime := time.Now()
+				for {
+					// Check if 30 seconds have passed
+					if time.Since(startTime) > 30*time.Second {
+						break
+					}
+
+					msg, err := client.ReadMessage()
+
+					if err != nil {
+
+						// If it contains EOF, we really dont care...
+						if !strings.Contains(err.Error(), "EOF") && err.Error() != "unexpected end of JSON input" {
+							Error("Error while reading Freeswitch message: %s", err)
+						}
+						break
+					}
+
+					Debug("%q", msg)
+				}
 
 				return
 			}
