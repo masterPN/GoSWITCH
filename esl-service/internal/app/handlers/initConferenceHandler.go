@@ -115,6 +115,7 @@ func InitConferenceHandler(client *Client, msg map[string]string) {
 					// If B receives call, then exit
 					if msg.Headers["Answer-State"] == "ringing" &&
 						msg.Headers["Caller-Destination-Number"] == operatorPrefixes[j]+initConferenceData[3] {
+						Debug("%q receive call, then exit initConferenceHandler", operatorPrefixes[j]+initConferenceData[3])
 						return
 					}
 				}
