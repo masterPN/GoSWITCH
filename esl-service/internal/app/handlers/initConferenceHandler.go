@@ -75,13 +75,13 @@ func validateRadius(client *Client, initConferenceData []string) bool {
 
 func prepareDestinationNumber(destination string) string {
 	if len(destination) > 0 && destination[0] == '0' {
-		return "66" + destination[1:]
+		return destination[1:]
 	}
 	return destination
 }
 
 func getOperatorRouting(destination string) (data.ImgCdrOperatorRoutingData, error) {
-	resp, err := http.Get(fmt.Sprintf("http://mssql-service:8080/operatorRouting?number=%s", destination))
+	resp, err := http.Get(fmt.Sprintf("http://mssql-service:8080/operatorRouting?number=%s", "66"+destination))
 	if err != nil {
 		return data.ImgCdrOperatorRoutingData{}, err
 	}
