@@ -5,9 +5,7 @@ import (
 	"encoding/json"
 	"esl-service/internal/data"
 	"fmt"
-	"io"
 	"log"
-	"log/slog"
 	"net/http"
 	"os"
 	"strconv"
@@ -18,16 +16,37 @@ import (
 )
 
 func InitConferenceHandler(client *Client, msg map[string]string) {
+	sipPort, externalDomain, baseClasses, operatorPrefixes := loadConfig()
+
+	initConferenceData := strings.Split(msg["variable_current_application_data"], ", ")
+	if validateRadius(client, initConferenceData) {
+		return
+	}
+
+	// Prepare destination number
+	initConferenceData[3] = prepareDestinationNumber(initConferenceData[3])
+
+	operatorRoutingResponse, err := getOperatorRouting(initConferenceData[3])
+	if err != nil {
+		log.Printf("Error fetching operator routing: %s\n", err)
+		return
+	}
+
+	baseClassesMap := createBaseClassesMap(baseClasses, operatorPrefixes)
+	if err := originateCalls(client, initConferenceData, operatorRoutingResponse, baseClassesMap, externalDomain, sipPort); err != nil {
+		log.Printf("Error originating calls: %s\n", err)
+	}
+}
+
+func loadConfig() (int, string, []string, []string) {
 	sipPort, _ := strconv.Atoi(os.Getenv("SIP_PORT"))
 	externalDomain := os.Getenv("EXTERNAL_DOMAIN")
 	baseClasses := strings.Split(os.Getenv("BASE_CLASS"), ",")
 	operatorPrefixes := strings.Split(os.Getenv("OPERATOR_PREFIX"), ",")
+	return sipPort, externalDomain, baseClasses, operatorPrefixes
+}
 
-	// Call is starting.
-	slog.Info(msg["variable_current_application_data"])
-	initConferenceData := strings.Split(msg["variable_current_application_data"], ", ")
-
-	// Execute RadiusOnestageValidate
+func validateRadius(client *Client, initConferenceData []string) bool {
 	postBody, _ := json.Marshal(map[string]string{
 		"prefix":            "8899",
 		"callingNumber":     initConferenceData[2],
@@ -35,98 +54,103 @@ func InitConferenceHandler(client *Client, msg map[string]string) {
 	})
 	resp, err := http.Post("http://mssql-service:8080/radiusOnestageValidate", "application/json", bytes.NewBuffer(postBody))
 	if err != nil {
-		log.Printf("POST http://mssql-service:8080/radiusOnestageValidate - %s\n", err)
-		return
+		log.Printf("Error validating radius: %s\n", err)
+		return true
 	}
 	defer resp.Body.Close()
-	respBodyByte, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Printf("POST http://mssql-service:8080/radiusOnestageValidate: could not reead response body - %s\n", err)
-	}
-	var radiusOnestageValidateResponse data.RadiusOnestageValidateData
-	json.Unmarshal(respBodyByte, &radiusOnestageValidateResponse)
 
-	// Break if status > 2
-	// Kick A leg
-	if radiusOnestageValidateResponse.Status > 2 {
+	var radiusResponse data.RadiusOnestageValidateData
+	if err := json.NewDecoder(resp.Body).Decode(&radiusResponse); err != nil {
+		log.Printf("Error decoding radius response: %s\n", err)
+		return true
+	}
+
+	if radiusResponse.Status > 2 {
 		client.BgApi(fmt.Sprintf("conference %v kick all", strings.Split(initConferenceData[2], "@")[0]))
-		log.Printf("status from RadiusOnestageValidate is %v\n", radiusOnestageValidateResponse.Status)
-		return
+		log.Printf("Kicked due to radius status %v\n", radiusResponse.Status)
+		return true
 	}
+	return false
+}
 
-	// Prepare destination number, remove first 0 if contain
-	if len(initConferenceData[3]) > 0 && initConferenceData[3][0] == '0' {
-		// 66 stands for Thailand
-		initConferenceData[3] = "66" + initConferenceData[3][1:]
+func prepareDestinationNumber(destination string) string {
+	if len(destination) > 0 && destination[0] == '0' {
+		return "66" + destination[1:]
 	}
+	return destination
+}
 
-	// Get Operator by Number
-	resp, err = http.Get(fmt.Sprintf("http://mssql-service:8080/operatorRouting?number=%s", initConferenceData[3]))
+func getOperatorRouting(destination string) (data.ImgCdrOperatorRoutingData, error) {
+	resp, err := http.Get(fmt.Sprintf("http://mssql-service:8080/operatorRouting?number=%s", destination))
 	if err != nil {
-		log.Printf("GET http://mssql-service:8080/operatorRouting?number=%s - %s\n", initConferenceData[3], err)
-		return
+		return data.ImgCdrOperatorRoutingData{}, err
 	}
 	defer resp.Body.Close()
-	respBodyByte, err = io.ReadAll(resp.Body)
-	if err != nil {
-		log.Printf("GET http://mssql-service:8080/operatorRouting?number=%s: could not reead response body - %s\n", initConferenceData[3], err)
+
+	var routingResponse data.ImgCdrOperatorRoutingData
+	if err := json.NewDecoder(resp.Body).Decode(&routingResponse); err != nil {
+		return data.ImgCdrOperatorRoutingData{}, err
 	}
-	var imgCdrOperatorRoutingResponse data.ImgCdrOperatorRoutingData
-	json.Unmarshal(respBodyByte, &imgCdrOperatorRoutingResponse)
+	return routingResponse, nil
+}
 
-	baseClassResponse := [4]int{imgCdrOperatorRoutingResponse.BaseClass1, imgCdrOperatorRoutingResponse.BaseClass2, imgCdrOperatorRoutingResponse.BaseClass3, imgCdrOperatorRoutingResponse.BaseClass4}
-
+func createBaseClassesMap(baseClasses, operatorPrefixes []string) map[string]string {
 	baseClassesMap := make(map[string]string)
 	for i, v := range baseClasses {
 		baseClassesMap[v] = operatorPrefixes[i]
 	}
+	return baseClassesMap
+}
+
+func originateCalls(client *Client, initConferenceData []string, routingResponse data.ImgCdrOperatorRoutingData, baseClassesMap map[string]string, externalDomain string, sipPort int) error {
+	baseClassResponse := [4]int{
+		routingResponse.BaseClass1,
+		routingResponse.BaseClass2,
+		routingResponse.BaseClass3,
+		routingResponse.BaseClass4,
+	}
 
 	for _, response := range baseClassResponse {
-		// skip if nil
 		if response == 0 {
 			continue
 		}
 
-		if operatorPrefix, exists := baseClassesMap[strconv.Itoa(response)]; exists || operatorPrefix != "" {
-			// Calling B leg
-			Debug("originate {origination_caller_id_number=%s}sofia/external/%s%s@%s:%v &conference(%s)",
-				initConferenceData[2], operatorPrefix, initConferenceData[3], externalDomain, sipPort,
-				initConferenceData[2])
-			client.BgApi(fmt.Sprintf("originate {origination_caller_id_number=%s}sofia/external/%s%s@%s:%v &conference(%s)",
-				initConferenceData[2], operatorPrefix, initConferenceData[3], externalDomain, sipPort,
-				initConferenceData[2]))
-
-			// Check B leg response within 5 seconds
-			startTime := time.Now()
-			for {
-				// Check if 5 seconds have passed
-				if time.Since(startTime) > 5*time.Second {
-					break
-				}
-
-				msg, err := client.ReadMessage()
-
-				if err != nil {
-
-					// If it contains EOF, we really dont care...
-					if !strings.Contains(err.Error(), "EOF") && err.Error() != "unexpected end of JSON input" {
-						Error("Error while reading Freeswitch message: %s", err)
-					}
-					break
-				}
-
-				Debug("%q", msg)
-
-				// If B receives call, then exit
-				if msg.Headers["Action"] == "add-member" &&
-					msg.Headers["Answer-State"] == "early" &&
-					msg.Headers["Caller-Destination-Number"] == operatorPrefix+initConferenceData[3] {
-					Debug("%q receive call, then exit initConferenceHandler", operatorPrefix+initConferenceData[3])
-					return
-				}
+		if operatorPrefix, exists := baseClassesMap[strconv.Itoa(response)]; exists && operatorPrefix != "" {
+			if err := originateCall(client, initConferenceData, operatorPrefix, externalDomain, sipPort); err != nil {
+				return err
 			}
 		}
-
 	}
+	return nil
+}
 
+func originateCall(client *Client, initConferenceData []string, operatorPrefix, externalDomain string, sipPort int) error {
+	client.BgApi(fmt.Sprintf("originate {origination_caller_id_number=%s}sofia/external/%s%s@%s:%v &conference(%s)",
+		initConferenceData[2], operatorPrefix, initConferenceData[3], externalDomain, sipPort,
+		initConferenceData[2]))
+
+	return waitForCall(client, operatorPrefix, initConferenceData[3])
+}
+
+func waitForCall(client *Client, operatorPrefix, destination string) error {
+	startTime := time.Now()
+	for {
+		if time.Since(startTime) > 5*time.Second {
+			break
+		}
+
+		msg, err := client.ReadMessage()
+		if err != nil {
+			if !strings.Contains(err.Error(), "EOF") && err.Error() != "unexpected end of JSON input" {
+				Error("Error while reading Freeswitch message: %s", err)
+			}
+			break
+		}
+
+		if msg.Headers["Action"] == "add-member" && msg.Headers["Answer-State"] == "early" && msg.Headers["Caller-Destination-Number"] == operatorPrefix+destination {
+			Debug("%q received call, exiting initConferenceHandler", operatorPrefix+destination)
+			return nil
+		}
+	}
+	return nil
 }
