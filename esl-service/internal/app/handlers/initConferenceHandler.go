@@ -75,55 +75,58 @@ func InitConferenceHandler(client *Client, msg map[string]string) {
 	json.Unmarshal(respBodyByte, &imgCdrOperatorRoutingResponse)
 
 	baseClassResponse := [4]int{imgCdrOperatorRoutingResponse.BaseClass1, imgCdrOperatorRoutingResponse.BaseClass2, imgCdrOperatorRoutingResponse.BaseClass3, imgCdrOperatorRoutingResponse.BaseClass4}
+
+	baseClassesMap := make(map[string]string)
+	for i, v := range baseClasses {
+		baseClassesMap[v] = operatorPrefixes[i]
+	}
+
 	for _, response := range baseClassResponse {
 		// skip if nil
 		if response == 0 {
 			continue
 		}
 
-		for j, baseClass := range baseClasses {
-			if strconv.Itoa(response) == baseClass {
-				// Calling B leg
-				Debug("originate {origination_caller_id_number=%s}sofia/external/%s%s@%s:%v &conference(%s)",
-					initConferenceData[2], operatorPrefixes[j], initConferenceData[3], externalDomain, sipPort,
-					initConferenceData[2])
-				client.BgApi(fmt.Sprintf("originate {origination_caller_id_number=%s}sofia/external/%s%s@%s:%v &conference(%s)",
-					initConferenceData[2], operatorPrefixes[j], initConferenceData[3], externalDomain, sipPort,
-					initConferenceData[2]))
+		if operatorPrefix, exists := baseClassesMap[strconv.Itoa(response)]; exists || operatorPrefix != "" {
+			// Calling B leg
+			Debug("originate {origination_caller_id_number=%s}sofia/external/%s%s@%s:%v &conference(%s)",
+				initConferenceData[2], operatorPrefix, initConferenceData[3], externalDomain, sipPort,
+				initConferenceData[2])
+			client.BgApi(fmt.Sprintf("originate {origination_caller_id_number=%s}sofia/external/%s%s@%s:%v &conference(%s)",
+				initConferenceData[2], operatorPrefix, initConferenceData[3], externalDomain, sipPort,
+				initConferenceData[2]))
 
-				// Check B leg response within 5 seconds
-				startTime := time.Now()
-				for {
-					// Check if 5 seconds have passed
-					if time.Since(startTime) > 5*time.Second {
-						break
-					}
-
-					msg, err := client.ReadMessage()
-
-					if err != nil {
-
-						// If it contains EOF, we really dont care...
-						if !strings.Contains(err.Error(), "EOF") && err.Error() != "unexpected end of JSON input" {
-							Error("Error while reading Freeswitch message: %s", err)
-						}
-						break
-					}
-
-					Debug("%q", msg)
-
-					// If B receives call, then exit
-					if msg.Headers["Action"] == "add-member" &&
-						msg.Headers["Answer-State"] == "early" &&
-						msg.Headers["Caller-Destination-Number"] == operatorPrefixes[j]+initConferenceData[3] {
-						Debug("%q receive call, then exit initConferenceHandler", operatorPrefixes[j]+initConferenceData[3])
-						return
-					}
+			// Check B leg response within 5 seconds
+			startTime := time.Now()
+			for {
+				// Check if 5 seconds have passed
+				if time.Since(startTime) > 5*time.Second {
+					break
 				}
 
-				return
+				msg, err := client.ReadMessage()
+
+				if err != nil {
+
+					// If it contains EOF, we really dont care...
+					if !strings.Contains(err.Error(), "EOF") && err.Error() != "unexpected end of JSON input" {
+						Error("Error while reading Freeswitch message: %s", err)
+					}
+					break
+				}
+
+				Debug("%q", msg)
+
+				// If B receives call, then exit
+				if msg.Headers["Action"] == "add-member" &&
+					msg.Headers["Answer-State"] == "early" &&
+					msg.Headers["Caller-Destination-Number"] == operatorPrefix+initConferenceData[3] {
+					Debug("%q receive call, then exit initConferenceHandler", operatorPrefix+initConferenceData[3])
+					return
+				}
 			}
 		}
+
 	}
 
 }
