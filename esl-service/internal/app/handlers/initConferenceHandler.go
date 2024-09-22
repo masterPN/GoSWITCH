@@ -91,11 +91,11 @@ func InitConferenceHandler(client *Client, msg map[string]string) {
 					initConferenceData[2], operatorPrefixes[j], initConferenceData[3], externalDomain, sipPort,
 					initConferenceData[2]))
 
-				// Check B leg response within 30 seconds
+				// Check B leg response within 5 seconds
 				startTime := time.Now()
 				for {
-					// Check if 30 seconds have passed
-					if time.Since(startTime) > 30*time.Second {
+					// Check if 5 seconds have passed
+					if time.Since(startTime) > 5*time.Second {
 						break
 					}
 
@@ -113,7 +113,8 @@ func InitConferenceHandler(client *Client, msg map[string]string) {
 					Debug("%q", msg)
 
 					// If B receives call, then exit
-					if msg.Headers["Answer-State"] == "ringing" &&
+					if msg.Headers["Action"] == "add-member" &&
+						msg.Headers["Answer-State"] == "early" &&
 						msg.Headers["Caller-Destination-Number"] == operatorPrefixes[j]+initConferenceData[3] {
 						Debug("%q receive call, then exit initConferenceHandler", operatorPrefixes[j]+initConferenceData[3])
 						return
