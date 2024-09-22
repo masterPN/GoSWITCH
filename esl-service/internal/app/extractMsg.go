@@ -4,7 +4,7 @@ import (
 	"esl-service/internal/app/handlers"
 	"strings"
 
-	. "github.com/0x19/goesl"
+	"github.com/0x19/goesl"
 )
 
 const (
@@ -15,7 +15,7 @@ const (
 	EventCallingFunction           = "Event-Calling-Function"
 )
 
-func Execute(client *Client, msg map[string]string) {
+func Execute(client *goesl.Client, msg map[string]string) {
 	eventFunction := msg[EventCallingFunction]
 	applicationData := msg[VariableCurrentApplicationData]
 	hangupCause := msg[HangupCause]

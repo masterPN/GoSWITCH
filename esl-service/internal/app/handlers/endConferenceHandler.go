@@ -9,10 +9,10 @@ import (
 	"net/http"
 	"strconv"
 
-	. "github.com/0x19/goesl"
+	"github.com/0x19/goesl"
 )
 
-func EndConferenceHandler(client *Client, msg map[string]string) {
+func EndConferenceHandler(client *goesl.Client, msg map[string]string) {
 	go client.BgApi(fmt.Sprintf("conference %v kick all", msg["variable_conference_name"]))
 
 	// todo: anino = conference room
@@ -43,7 +43,7 @@ func EndConferenceHandler(client *Client, msg map[string]string) {
 	respBody.Prefix = ""
 	respBody.LanguageCode = ""
 
-	resp, err = http.Post("http://mssql-service:8080/radiusAccounting", "application/json", respBody)
+	_, err = http.Post("http://mssql-service:8080/radiusAccounting", "application/json", respBody)
 	if err != nil {
 		log.Printf("POST http://mssql-service:8080/radiusAccounting - %s\n", err)
 		return

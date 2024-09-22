@@ -12,10 +12,10 @@ import (
 	"strings"
 	"time"
 
-	. "github.com/0x19/goesl"
+	"github.com/0x19/goesl"
 )
 
-func InitConferenceHandler(client *Client, msg map[string]string) {
+func InitConferenceHandler(client *goesl.Client, msg map[string]string) {
 	sipPort, externalDomain, baseClasses, operatorPrefixes := loadConfig()
 
 	initConferenceData := strings.Split(msg["variable_current_application_data"], ", ")
@@ -46,7 +46,7 @@ func loadConfig() (int, string, []string, []string) {
 	return sipPort, externalDomain, baseClasses, operatorPrefixes
 }
 
-func validateRadius(client *Client, initConferenceData []string) bool {
+func validateRadius(client *goesl.Client, initConferenceData []string) bool {
 	postBody, _ := json.Marshal(map[string]string{
 		"prefix":            "8899",
 		"callingNumber":     initConferenceData[2],
@@ -102,7 +102,7 @@ func createBaseClassesMap(baseClasses, operatorPrefixes []string) map[string]str
 	return baseClassesMap
 }
 
-func originateCalls(client *Client, initConferenceData []string, routingResponse data.ImgCdrOperatorRoutingData, baseClassesMap map[string]string, externalDomain string, sipPort int) error {
+func originateCalls(client *goesl.Client, initConferenceData []string, routingResponse data.ImgCdrOperatorRoutingData, baseClassesMap map[string]string, externalDomain string, sipPort int) error {
 	baseClassResponse := [4]int{
 		routingResponse.BaseClass1,
 		routingResponse.BaseClass2,
@@ -124,7 +124,7 @@ func originateCalls(client *Client, initConferenceData []string, routingResponse
 	return nil
 }
 
-func originateCall(client *Client, initConferenceData []string, operatorPrefix, externalDomain string, sipPort int) error {
+func originateCall(client *goesl.Client, initConferenceData []string, operatorPrefix, externalDomain string, sipPort int) error {
 	client.BgApi(fmt.Sprintf("originate {origination_caller_id_number=%s}sofia/external/%s%s@%s:%v &conference(%s)",
 		initConferenceData[2], operatorPrefix, initConferenceData[3], externalDomain, sipPort,
 		initConferenceData[2]))
@@ -132,7 +132,7 @@ func originateCall(client *Client, initConferenceData []string, operatorPrefix, 
 	return waitForCall(client, operatorPrefix, initConferenceData[3])
 }
 
-func waitForCall(client *Client, operatorPrefix, destination string) error {
+func waitForCall(client *goesl.Client, operatorPrefix, destination string) error {
 	startTime := time.Now()
 	for {
 		if time.Since(startTime) > 5*time.Second {
@@ -142,13 +142,13 @@ func waitForCall(client *Client, operatorPrefix, destination string) error {
 		msg, err := client.ReadMessage()
 		if err != nil {
 			if !strings.Contains(err.Error(), "EOF") && err.Error() != "unexpected end of JSON input" {
-				Error("Error while reading Freeswitch message: %s", err)
+				goesl.Error("Error while reading Freeswitch message: %s", err)
 			}
 			break
 		}
 
 		if msg.Headers["Action"] == "add-member" && msg.Headers["Answer-State"] == "early" && msg.Headers["Caller-Destination-Number"] == operatorPrefix+destination {
-			Debug("%q received call, exiting initConferenceHandler", operatorPrefix+destination)
+			goesl.Debug("%q received call, exiting initConferenceHandler", operatorPrefix+destination)
 			return nil
 		}
 	}
