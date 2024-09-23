@@ -20,9 +20,6 @@ func InitConferenceHandler(client *goesl.Client, msg map[string]string) {
 
 	initConferenceData := strings.Split(msg["variable_current_application_data"], ", ")
 
-	// Prepare destination number
-	initConferenceData[3] = prepareDestinationNumber(initConferenceData[3])
-
 	operatorRoutingResponse, err := getOperatorRouting(initConferenceData[3])
 	if err != nil {
 		log.Printf("Error fetching operator routing: %s\n", err)
@@ -143,10 +140,10 @@ func originateCalls(client *goesl.Client, initConferenceData []string, routingRe
 
 func originateCall(client *goesl.Client, initConferenceData []string, operatorPrefix, externalDomain string, sipPort int) error {
 	client.BgApi(fmt.Sprintf("originate {origination_caller_id_number=%s}sofia/external/%s%s@%s:%v &conference(%s)",
-		initConferenceData[2], operatorPrefix, initConferenceData[3], externalDomain, sipPort,
+		initConferenceData[2], operatorPrefix, prepareDestinationNumber(initConferenceData[3]), externalDomain, sipPort,
 		initConferenceData[1]))
 
-	return waitForCall(client, operatorPrefix, initConferenceData[3])
+	return waitForCall(client, operatorPrefix, prepareDestinationNumber(initConferenceData[3]))
 }
 
 func waitForCall(client *goesl.Client, operatorPrefix, destination string) error {
