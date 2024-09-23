@@ -130,15 +130,15 @@ func originateCalls(client *goesl.Client, initConferenceData []string, routingRe
 				continue
 			}
 
-			if err := originateCall(client, initConferenceData, operatorPrefix, externalDomain, sipPort); err != nil {
-				return err
+			if originateCall(client, initConferenceData, operatorPrefix, externalDomain, sipPort) {
+				return nil
 			}
 		}
 	}
 	return nil
 }
 
-func originateCall(client *goesl.Client, initConferenceData []string, operatorPrefix, externalDomain string, sipPort int) error {
+func originateCall(client *goesl.Client, initConferenceData []string, operatorPrefix, externalDomain string, sipPort int) bool {
 	client.BgApi(fmt.Sprintf("originate {origination_caller_id_number=%s}sofia/external/%s%s@%s:%v &conference(%s)",
 		initConferenceData[2], operatorPrefix, prepareDestinationNumber(initConferenceData[3]), externalDomain, sipPort,
 		initConferenceData[1]))
@@ -146,7 +146,7 @@ func originateCall(client *goesl.Client, initConferenceData []string, operatorPr
 	return waitForCall(client, operatorPrefix, prepareDestinationNumber(initConferenceData[3]))
 }
 
-func waitForCall(client *goesl.Client, operatorPrefix, destination string) error {
+func waitForCall(client *goesl.Client, operatorPrefix, destination string) bool {
 	startTime := time.Now()
 	for {
 		if time.Since(startTime) > 5*time.Second {
@@ -163,8 +163,8 @@ func waitForCall(client *goesl.Client, operatorPrefix, destination string) error
 
 		if msg.Headers["Action"] == "add-member" && msg.Headers["Answer-State"] == "early" && msg.Headers["Caller-Destination-Number"] == operatorPrefix+destination {
 			goesl.Debug("%q received call, exiting initConferenceHandler", operatorPrefix+destination)
-			return nil
+			return true
 		}
 	}
-	return nil
+	return false
 }
