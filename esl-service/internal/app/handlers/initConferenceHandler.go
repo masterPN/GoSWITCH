@@ -20,7 +20,7 @@ func InitConferenceHandler(client *goesl.Client, msg map[string]string) {
 
 	initConferenceData := strings.Split(msg["variable_current_application_data"], ", ")
 
-	operatorRoutingResponse, err := getOperatorRouting(initConferenceData[3])
+	operatorRoutingResponse, err := getOperatorRouting(prepareDestinationNumber(initConferenceData[3]))
 	if err != nil {
 		log.Printf("Error fetching operator routing: %s\n", err)
 		return
