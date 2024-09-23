@@ -9,6 +9,7 @@ import (
 
 const (
 	VariableCurrentApplicationData = "variable_current_application_data"
+	EventName                      = "Event-Name"
 	HangupCause                    = "Hangup-Cause"
 	AnswerState                    = "Answer-State"
 	CallDirection                  = "Call-Direction"
@@ -16,6 +17,7 @@ const (
 )
 
 func Execute(client *goesl.Client, msg map[string]string) {
+	eventName := msg[EventName]
 	eventFunction := msg[EventCallingFunction]
 	applicationData := msg[VariableCurrentApplicationData]
 	hangupCause := msg[HangupCause]
@@ -23,7 +25,7 @@ func Execute(client *goesl.Client, msg map[string]string) {
 	callDirection := msg[CallDirection]
 
 	switch {
-	case strings.Contains(applicationData, "initConference"):
+	case strings.Contains(applicationData, "initConference") && eventName == "CHANNEL_EXECUTE_COMPLETE":
 		goesl.Debug("%q", applicationData)
 		go handlers.InitConferenceHandler(client, msg)
 	case strings.Contains(hangupCause, "CALL_REJECTED") && strings.Contains(eventFunction, "switch_channel_perform_hangup"):
