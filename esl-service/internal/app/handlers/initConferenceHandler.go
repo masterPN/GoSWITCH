@@ -19,9 +19,6 @@ func InitConferenceHandler(client *goesl.Client, msg map[string]string) {
 	sipPort, externalDomain, baseClasses, operatorPrefixes := loadConfig()
 
 	initConferenceData := strings.Split(msg["variable_current_application_data"], ", ")
-	if validateRadius(client, initConferenceData) {
-		return
-	}
 
 	// Prepare destination number
 	initConferenceData[3] = prepareDestinationNumber(initConferenceData[3])
@@ -46,9 +43,9 @@ func loadConfig() (int, string, []string, []string) {
 	return sipPort, externalDomain, baseClasses, operatorPrefixes
 }
 
-func validateRadius(client *goesl.Client, initConferenceData []string) bool {
+func validateRadius(client *goesl.Client, initConferenceData []string, operatorPrefix string) bool {
 	postBody, _ := json.Marshal(map[string]string{
-		"prefix":            "8899",
+		"prefix":            operatorPrefix,
 		"callingNumber":     initConferenceData[2],
 		"destinationNumber": initConferenceData[3],
 	})
@@ -70,18 +67,34 @@ func validateRadius(client *goesl.Client, initConferenceData []string) bool {
 		log.Printf("Kicked due to radius status %v\n", radiusResponse.Status)
 		return true
 	}
+
+	postBody, _ = json.Marshal(map[string]string{
+		"accessNo":     operatorPrefix,
+		"anino":        initConferenceData[2],
+		"destNo":       initConferenceData[3],
+		"subscriberNo": radiusResponse.AccountNum,
+		"sessionID":    initConferenceData[1],
+	})
+
+	_, err = http.Post("http://redis-service:8080/saveRadiusAccountingData", "application/json", bytes.NewBuffer(postBody))
+	if err != nil {
+		log.Printf("POST http://redis-service:8080/saveRadiusAccountingData - %s\n", err)
+		return true
+	}
+
 	return false
 }
 
 func prepareDestinationNumber(destination string) string {
+	// Begin with 0, means local call
 	if len(destination) > 0 && destination[0] == '0' {
-		return destination[1:]
+		return "66" + destination[1:]
 	}
 	return destination
 }
 
 func getOperatorRouting(destination string) (data.ImgCdrOperatorRoutingData, error) {
-	resp, err := http.Get(fmt.Sprintf("http://mssql-service:8080/operatorRouting?number=%s", "66"+destination))
+	resp, err := http.Get(fmt.Sprintf("http://mssql-service:8080/operatorRouting?number=%s", destination))
 	if err != nil {
 		return data.ImgCdrOperatorRoutingData{}, err
 	}
@@ -116,6 +129,10 @@ func originateCalls(client *goesl.Client, initConferenceData []string, routingRe
 		}
 
 		if operatorPrefix, exists := baseClassesMap[strconv.Itoa(response)]; exists && operatorPrefix != "" {
+			if validateRadius(client, initConferenceData, operatorPrefix) {
+				continue
+			}
+
 			if err := originateCall(client, initConferenceData, operatorPrefix, externalDomain, sipPort); err != nil {
 				return err
 			}
@@ -127,7 +144,7 @@ func originateCalls(client *goesl.Client, initConferenceData []string, routingRe
 func originateCall(client *goesl.Client, initConferenceData []string, operatorPrefix, externalDomain string, sipPort int) error {
 	client.BgApi(fmt.Sprintf("originate {origination_caller_id_number=%s}sofia/external/%s%s@%s:%v &conference(%s)",
 		initConferenceData[2], operatorPrefix, initConferenceData[3], externalDomain, sipPort,
-		initConferenceData[2]))
+		initConferenceData[1]))
 
 	return waitForCall(client, operatorPrefix, initConferenceData[3])
 }
