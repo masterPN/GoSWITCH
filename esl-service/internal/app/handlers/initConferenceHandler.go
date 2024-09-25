@@ -152,10 +152,6 @@ func originateCall(client *goesl.Client, initConferenceData []string, operatorPr
 func waitForCall(client *goesl.Client, operatorPrefix, destination string) bool {
 	startTime := time.Now()
 	for {
-		if time.Since(startTime) > 5*time.Second {
-			return true
-		}
-
 		msg, err := client.ReadMessage()
 		if err != nil {
 			if !strings.Contains(err.Error(), "EOF") && err.Error() != "unexpected end of JSON input" {
@@ -164,7 +160,8 @@ func waitForCall(client *goesl.Client, operatorPrefix, destination string) bool 
 			break
 		}
 
-		if msg.Headers["Action"] == "add-member" && msg.Headers["Answer-State"] == "early" && msg.Headers["Caller-Destination-Number"] == operatorPrefix+destination {
+		if time.Since(startTime) > 5*time.Second ||
+			(msg.Headers["Action"] == "add-member" && msg.Headers["Answer-State"] == "early" && msg.Headers["Caller-Destination-Number"] == operatorPrefix+destination) {
 			goesl.Debug("%q received call, exiting initConferenceHandler", operatorPrefix+destination)
 			return true
 		}
