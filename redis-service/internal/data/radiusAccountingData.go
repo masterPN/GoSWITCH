@@ -38,28 +38,68 @@ func (r RadiusAccountingDataModel) Set(input RadiusAccountingData) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	err := r.DB.HSet(ctx, input.SessionID, map[string]interface{}{
-		"confID":       input.ConfID,
-		"accessNo":     input.AccessNo,
-		"anino":        input.Anino,
-		"destNo":       input.DestNo,
-		"subscriberNo": input.SubscriberNo,
-		"pwd":          input.Pwd,
-		"sessionID":    input.SessionID,
-		"categoryID":   input.CategoryID,
-		"startTime":    input.StartTime,
-		"talkingTime":  input.TalkingTime,
-		"callDuration": input.CallDuration,
-		"releaseCode":  input.ReleaseCode,
-		"inTrunkID":    input.InTrunkID,
-		"outTrunkID":   input.OutTrunkID,
-		"reasonID":     input.ReasonID,
-		"prefix":       input.Prefix,
-		"languageCode": input.LanguageCode,
-	}).Err()
-	if err != nil {
-		log.Fatalf("Could not set hash: %v", err)
-		return err
+	data := make(map[string]interface{})
+
+	// Only add fields that are not empty or zero
+	if input.ConfID != 0 {
+		data["confID"] = input.ConfID
+	}
+	if input.AccessNo != "" {
+		data["accessNo"] = input.AccessNo
+	}
+	if input.Anino != "" {
+		data["anino"] = input.Anino
+	}
+	if input.DestNo != "" {
+		data["destNo"] = input.DestNo
+	}
+	if input.SubscriberNo != "" {
+		data["subscriberNo"] = input.SubscriberNo
+	}
+	if input.Pwd != "" {
+		data["pwd"] = input.Pwd
+	}
+	if input.SessionID != "" {
+		data["sessionID"] = input.SessionID
+	}
+	if input.CategoryID != "" {
+		data["categoryID"] = input.CategoryID
+	}
+	if input.StartTime != "" {
+		data["startTime"] = input.StartTime
+	}
+	if input.TalkingTime != "" {
+		data["talkingTime"] = input.TalkingTime
+	}
+	if input.CallDuration != 0 {
+		data["callDuration"] = input.CallDuration
+	}
+	if input.ReleaseCode != "" {
+		data["releaseCode"] = input.ReleaseCode
+	}
+	if input.InTrunkID != 0 {
+		data["inTrunkID"] = input.InTrunkID
+	}
+	if input.OutTrunkID != 0 {
+		data["outTrunkID"] = input.OutTrunkID
+	}
+	if input.ReasonID != 0 {
+		data["reasonID"] = input.ReasonID
+	}
+	if input.Prefix != "" {
+		data["prefix"] = input.Prefix
+	}
+	if input.LanguageCode != "" {
+		data["languageCode"] = input.LanguageCode
+	}
+
+	// Set only the fields that are not nil or empty
+	if len(data) > 0 {
+		err := r.DB.HSet(ctx, input.SessionID, data).Err()
+		if err != nil {
+			log.Fatalf("Could not set hash: %v", err)
+			return err
+		}
 	}
 
 	return nil
