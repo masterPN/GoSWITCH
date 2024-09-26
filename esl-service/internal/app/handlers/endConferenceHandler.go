@@ -15,18 +15,15 @@ import (
 func EndConferenceHandler(client *goesl.Client, msg map[string]string) {
 	go client.BgApi(fmt.Sprintf("conference %v kick all", msg["variable_conference_name"]))
 
-	// todo: anino = conference room
-	anino := "612701681"
-
-	resp, err := http.Get(fmt.Sprintf("http://redis-service:8080/popRadiusAccountingData/%s", anino))
+	resp, err := http.Get(fmt.Sprintf("http://redis-service:8080/popRadiusAccountingData/%s", msg["variable_conference_name"]))
 	if err != nil {
-		log.Printf("GET http://redis-service:8080/popRadiusAccountingData/%s - %s\n", anino, err)
+		log.Printf("GET http://redis-service:8080/popRadiusAccountingData/%s - %s\n", msg["variable_conference_name"], err)
 		return
 	}
 	defer resp.Body.Close()
 	respBodyByte, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Printf("GET http://redis-service:8080/popRadiusAccountingData/%s: could not reead response body - %s\n", anino, err)
+		log.Printf("GET http://redis-service:8080/popRadiusAccountingData/%s: could not reead response body - %s\n", msg["variable_conference_name"], err)
 	}
 	var respBody data.RadiusAccountingInput
 	json.Unmarshal(respBodyByte, &respBody)
@@ -36,11 +33,10 @@ func EndConferenceHandler(client *goesl.Client, msg map[string]string) {
 	respBody.Pwd = ""
 	respBody.CategoryID = "N"
 	respBody.CallDuration, _ = strconv.Atoi(msg["variable_duration"])
-	respBody.ReleaseCode = "16"
+	respBody.ReleaseCode = msg["variable_hangup_cause_q850"]
 	respBody.InTrunkID = 25
 	respBody.OutTrunkID = 601
 	respBody.ReasonID = 0
-	respBody.Prefix = ""
 	respBody.LanguageCode = ""
 
 	_, err = http.Post("http://mssql-service:8080/radiusAccounting", "application/json", respBody)
