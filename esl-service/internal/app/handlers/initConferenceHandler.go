@@ -16,8 +16,8 @@ import (
 	"github.com/0x19/goesl"
 )
 
-var sipOperatorUnavailableCode = []string{"404", "503"}
-var sipCalleeUnavailableCode = []string{"486"}
+var sipOperatorUnavailableCode = []string{"1", "41"}
+var sipCalleeUnavailableCode = []string{"17"}
 
 func InitConferenceHandler(client *goesl.Client, msg map[string]string) {
 	sipPort, externalDomain, baseClasses, operatorPrefixes := loadConfig()
@@ -173,7 +173,7 @@ func waitForCall(client *goesl.Client, operatorPrefix, destination string) bool 
 		}
 
 		// if callee is not available, then stop
-		if msg.Headers["Answer-State"] == "hangup" && msg.Headers["Caller-Destination-Number"] == operatorPrefix+destination && slices.Contains(sipCalleeUnavailableCode, msg.Headers["variable_sip_invite_failure_status"]) {
+		if msg.Headers["Answer-State"] == "hangup" && msg.Headers["Caller-Destination-Number"] == operatorPrefix+destination && slices.Contains(sipCalleeUnavailableCode, msg.Headers["variable_hangup_cause_q850"]) {
 			goesl.Debug(`%q has a problem, please contact callee %q.\n
 				code - %q, reason - %q`,
 				operatorPrefix+destination, destination,
@@ -182,7 +182,7 @@ func waitForCall(client *goesl.Client, operatorPrefix, destination string) bool 
 		}
 
 		// if operator has a problem, then skip
-		if msg.Headers["Answer-State"] == "hangup" && msg.Headers["Caller-Destination-Number"] == operatorPrefix+destination && slices.Contains(sipOperatorUnavailableCode, msg.Headers["variable_sip_invite_failure_status"]) {
+		if msg.Headers["Answer-State"] == "hangup" && msg.Headers["Caller-Destination-Number"] == operatorPrefix+destination && slices.Contains(sipOperatorUnavailableCode, msg.Headers["variable_hangup_cause_q850"]) {
 			goesl.Debug(`%q has a problem, please contact operator %q.\n
 				code - %q, reason - %q`,
 				operatorPrefix+destination, operatorPrefix,
