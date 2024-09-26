@@ -105,14 +105,14 @@ func (r RadiusAccountingDataModel) Set(input RadiusAccountingData) error {
 	return nil
 }
 
-func (r RadiusAccountingDataModel) Pop(anino string) (RadiusAccountingData, error) {
+func (r RadiusAccountingDataModel) Pop(sessionID string) (RadiusAccountingData, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	// Retrieve all fields and values from the hash
-	radiusAccountingDataMap, err := r.DB.HGetAll(ctx, anino).Result()
+	radiusAccountingDataMap, err := r.DB.HGetAll(ctx, sessionID).Result()
 	if err != nil {
-		log.Fatalf("could not HGetAll from hash %s: %v", anino, err)
+		log.Fatalf("could not HGetAll from hash %s: %v", sessionID, err)
 		return RadiusAccountingData{}, err
 	}
 
@@ -144,19 +144,19 @@ func (r RadiusAccountingDataModel) Pop(anino string) (RadiusAccountingData, erro
 	}
 
 	// Delete the key
-	result, err := r.DB.Del(ctx, anino).Result()
+	result, err := r.DB.Del(ctx, sessionID).Result()
 
 	if err != nil {
-		log.Fatalf("could not delete key %s: %v", anino, err)
+		log.Fatalf("could not delete key %s: %v", sessionID, err)
 		return radiusAccountingData, err
 	}
 
 	// Output the result
 	if result == 1 {
-		fmt.Printf("Key %s was deleted successfully.\n", anino)
+		fmt.Printf("Key %s was deleted successfully.\n", sessionID)
 	} else {
-		fmt.Printf("Key %s does not exist.\n", anino)
-		return radiusAccountingData, fmt.Errorf("key %s does not exist", anino)
+		fmt.Printf("Key %s does not exist.\n", sessionID)
+		return radiusAccountingData, fmt.Errorf("key %s does not exist", sessionID)
 	}
 
 	return radiusAccountingData, nil
