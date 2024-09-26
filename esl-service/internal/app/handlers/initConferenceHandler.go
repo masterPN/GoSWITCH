@@ -16,7 +16,8 @@ import (
 	"github.com/0x19/goesl"
 )
 
-var sipExitCode = []string{"404", "486", "503"}
+var sipOperatorUnavailableCode = []string{"404", "503"}
+var sipCalleeUnavailableCode = []string{"486"}
 
 func InitConferenceHandler(client *goesl.Client, msg map[string]string) {
 	sipPort, externalDomain, baseClasses, operatorPrefixes := loadConfig()
@@ -134,6 +135,7 @@ func originateCalls(client *goesl.Client, initConferenceData []string, routingRe
 			}
 
 			if originateCall(client, initConferenceData, operatorPrefix, externalDomain, sipPort) {
+				client.BgApi(fmt.Sprintf("conference %v kick all", initConferenceData[1]))
 				return nil
 			}
 		}
@@ -152,6 +154,10 @@ func originateCall(client *goesl.Client, initConferenceData []string, operatorPr
 func waitForCall(client *goesl.Client, operatorPrefix, destination string) bool {
 	startTime := time.Now()
 	for {
+		if time.Since(startTime) > 5*time.Second {
+			continue
+		}
+
 		msg, err := client.ReadMessage()
 		if err != nil {
 			if !strings.Contains(err.Error(), "EOF") && err.Error() != "unexpected end of JSON input" {
@@ -160,18 +166,29 @@ func waitForCall(client *goesl.Client, operatorPrefix, destination string) bool 
 			break
 		}
 
-		if time.Since(startTime) > 5*time.Second ||
-			(msg.Headers["Action"] == "add-member" && msg.Headers["Answer-State"] == "early" && msg.Headers["Caller-Destination-Number"] == operatorPrefix+destination) {
+		// if connected, then stop
+		if msg.Headers["Action"] == "add-member" && msg.Headers["Answer-State"] == "early" && msg.Headers["Caller-Destination-Number"] == operatorPrefix+destination {
 			goesl.Debug("%q received call, exiting initConferenceHandler", operatorPrefix+destination)
+			return false
+		}
+
+		// if callee is not available, then stop
+		if msg.Headers["Answer-State"] == "hangup" && msg.Headers["Caller-Destination-Number"] == operatorPrefix+destination && slices.Contains(sipCalleeUnavailableCode, msg.Headers["variable_sip_invite_failure_status"]) {
+			goesl.Debug(`%q has a problem, please contact callee %q.\n
+				code - %q, reason - %q`,
+				operatorPrefix+destination, destination,
+				msg.Headers["variable_sip_invite_failure_status"], msg.Headers["variable_sip_invite_failure_phrase"])
 			return true
 		}
-		if msg.Headers["Answer-State"] == "hangup" && msg.Headers["Caller-Destination-Number"] == operatorPrefix+destination && slices.Contains(sipExitCode, msg.Headers["variable_sip_invite_failure_status"]) {
+
+		// if operator has a problem, then skip
+		if msg.Headers["Answer-State"] == "hangup" && msg.Headers["Caller-Destination-Number"] == operatorPrefix+destination && slices.Contains(sipOperatorUnavailableCode, msg.Headers["variable_sip_invite_failure_status"]) {
 			goesl.Debug(`%q has a problem, please contact operator %q.\n
 				code - %q, reason - %q`,
 				operatorPrefix+destination, operatorPrefix,
 				msg.Headers["variable_sip_invite_failure_status"], msg.Headers["variable_sip_invite_failure_phrase"])
-			return true
+			continue
 		}
 	}
-	return false
+	return true
 }
