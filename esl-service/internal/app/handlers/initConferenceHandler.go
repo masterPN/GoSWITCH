@@ -64,7 +64,7 @@ func validateRadius(client *goesl.Client, initConferenceData []string, operatorP
 	}
 
 	if radiusResponse.Status > 2 {
-		client.BgApi(fmt.Sprintf("conference %v kick all", strings.Split(initConferenceData[2], "@")[0]))
+		client.BgApi(fmt.Sprintf("conference %v kick all", initConferenceData[1]))
 		log.Printf("Kicked due to radius status %v\n", radiusResponse.Status)
 		return true
 	}
