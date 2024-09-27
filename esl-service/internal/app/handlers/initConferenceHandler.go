@@ -136,6 +136,7 @@ func originateCalls(client *goesl.Client, initConferenceData []string, routingRe
 
 			if originateCall(client, initConferenceData, operatorPrefix, externalDomain, sipPort) {
 				client.BgApi(fmt.Sprintf("conference %v kick all", initConferenceData[1]))
+				http.Get(fmt.Sprintf("http://redis-service:8080/popRadiusAccountingData/%s", initConferenceData[1]))
 				return nil
 			}
 		}
