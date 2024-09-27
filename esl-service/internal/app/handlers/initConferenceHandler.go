@@ -129,7 +129,7 @@ func originateCalls(client *goesl.Client, initConferenceData []string, routingRe
 		routingResponse.BaseClass4,
 	}
 
-	for _, response := range baseClassResponse {
+	for i, response := range baseClassResponse {
 		if response == 0 {
 			continue
 		}
@@ -140,10 +140,14 @@ func originateCalls(client *goesl.Client, initConferenceData []string, routingRe
 			}
 
 			if originateCall(client, initConferenceData, operatorPrefix, externalDomain, sipPort) {
-				client.BgApi(fmt.Sprintf("conference %v kick all", initConferenceData[1]))
-				http.Get(fmt.Sprintf("http://redis-service:8080/popRadiusAccountingData/%s", initConferenceData[1]))
 				return nil
 			}
+		}
+
+		if i == len(baseClassResponse)-1 {
+			goesl.Debug("There's no operator available.")
+			client.BgApi(fmt.Sprintf("conference %v kick all", initConferenceData[1]))
+			http.Get(fmt.Sprintf("http://redis-service:8080/popRadiusAccountingData/%s", initConferenceData[1]))
 		}
 	}
 	return nil
@@ -154,10 +158,10 @@ func originateCall(client *goesl.Client, initConferenceData []string, operatorPr
 		initConferenceData[2], operatorPrefix, prepareDestinationNumber(initConferenceData[3]), externalDomain, sipPort,
 		initConferenceData[1]))
 
-	return waitForCall(client, operatorPrefix, prepareDestinationNumber(initConferenceData[3]))
+	return waitForCall(client, operatorPrefix, prepareDestinationNumber(initConferenceData[3]), initConferenceData[1])
 }
 
-func waitForCall(client *goesl.Client, operatorPrefix, destination string) bool {
+func waitForCall(client *goesl.Client, operatorPrefix, destination string, conferenceName string) bool {
 	startTime := time.Now()
 	for {
 		if time.Since(startTime) > 5*time.Second {
@@ -172,20 +176,22 @@ func waitForCall(client *goesl.Client, operatorPrefix, destination string) bool 
 
 		if isConnected(msg, operatorPrefix, destination) {
 			goesl.Debug("%q received call, exiting initConferenceHandler", operatorPrefix+destination)
-			return false
+			return true
 		}
 
 		if isCalleeUnavailable(msg, operatorPrefix, destination) {
 			logCalleeIssue(msg, operatorPrefix, destination)
+			client.BgApi(fmt.Sprintf("conference %v kick all", conferenceName))
+			http.Get(fmt.Sprintf("http://redis-service:8080/popRadiusAccountingData/%s", conferenceName))
 			return true
 		}
 
 		if isOperatorUnavailable(msg, operatorPrefix, destination) {
 			logOperatorIssue(msg, operatorPrefix)
-			continue
+			return false
 		}
 	}
-	return true
+	return false
 }
 
 func handleReadError(err error) {
