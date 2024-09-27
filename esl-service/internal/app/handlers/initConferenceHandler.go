@@ -17,8 +17,9 @@ import (
 )
 
 const (
-	answerStateHeader       = "Answer-State"
-	callerDestinationHeader = "Caller-Destination-Number"
+	answerStateHeader        = "Answer-State"
+	callerDestinationHeader  = "Caller-Destination-Number"
+	destroyConferenceCommand = "conference %v kick all"
 )
 
 var sipOperatorUnavailableCode = []string{"1", "41"}
@@ -69,7 +70,7 @@ func validateRadius(client *goesl.Client, initConferenceData []string, operatorP
 	}
 
 	if radiusResponse.Status > 2 {
-		client.BgApi(fmt.Sprintf("conference %v kick all", initConferenceData[1]))
+		client.BgApi(fmt.Sprintf(destroyConferenceCommand, initConferenceData[1]))
 		log.Printf("Kicked due to radius status %v\n", radiusResponse.Status)
 		return true
 	}
@@ -146,7 +147,7 @@ func originateCalls(client *goesl.Client, initConferenceData []string, routingRe
 
 		if i == len(baseClassResponse)-1 {
 			goesl.Debug("There's no operator available.")
-			client.BgApi(fmt.Sprintf("conference %v kick all", initConferenceData[1]))
+			client.BgApi(fmt.Sprintf(destroyConferenceCommand, initConferenceData[1]))
 			http.Get(fmt.Sprintf("http://redis-service:8080/popRadiusAccountingData/%s", initConferenceData[1]))
 		}
 	}
@@ -181,7 +182,7 @@ func waitForCall(client *goesl.Client, operatorPrefix, destination string, confe
 
 		if isCalleeUnavailable(msg, operatorPrefix, destination) {
 			logCalleeIssue(msg, operatorPrefix, destination)
-			client.BgApi(fmt.Sprintf("conference %v kick all", conferenceName))
+			client.BgApi(fmt.Sprintf(destroyConferenceCommand, conferenceName))
 			http.Get(fmt.Sprintf("http://redis-service:8080/popRadiusAccountingData/%s", conferenceName))
 			return true
 		}
