@@ -178,7 +178,7 @@ func waitForCall(client *goesl.Client, operatorPrefix, destination string) bool 
 			goesl.Debug(`%q has a problem, please contact callee %q.\n
 				code - %q, reason - %q`,
 				operatorPrefix+destination, destination,
-				msg.Headers["variable_sip_invite_failure_status"], msg.Headers["variable_sip_invite_failure_phrase"])
+				msg.Headers["variable_hangup_cause_q850"], msg.Headers["variable_sip_invite_failure_phrase"])
 			return true
 		}
 
@@ -187,7 +187,7 @@ func waitForCall(client *goesl.Client, operatorPrefix, destination string) bool 
 			goesl.Debug(`%q has a problem, please contact operator %q.\n
 				code - %q, reason - %q`,
 				operatorPrefix+destination, operatorPrefix,
-				msg.Headers["variable_sip_invite_failure_status"], msg.Headers["variable_sip_invite_failure_phrase"])
+				msg.Headers["variable_hangup_cause_q850"], msg.Headers["variable_sip_invite_failure_phrase"])
 			continue
 		}
 	}
