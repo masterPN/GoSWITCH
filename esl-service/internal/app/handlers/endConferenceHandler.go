@@ -33,6 +33,10 @@ func EndConferenceHandler(client *goesl.Client, msg map[string]string) {
 	hangupTime := time.UnixMicro(int64(hangupTimeUnix))
 	talkingTime, _ := time.Parse(timeFormat, respBody.TalkingTime)
 
+	if nilTime, _ := time.Parse(timeFormat, "01/01/0001 00:00:00"); talkingTime == nilTime {
+		hangupTime = nilTime
+	}
+
 	// todo: make variables dynamic
 	respBody.ConfID = 65716
 	respBody.Pwd = ""
