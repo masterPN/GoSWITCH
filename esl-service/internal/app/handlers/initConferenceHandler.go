@@ -16,6 +16,11 @@ import (
 	"github.com/0x19/goesl"
 )
 
+const (
+	answerStateHeader       = "Answer-State"
+	callerDestinationHeader = "Caller-Destination-Number"
+)
+
 var sipOperatorUnavailableCode = []string{"1", "41"}
 var sipCalleeUnavailableCode = []string{"17"}
 
@@ -161,35 +166,62 @@ func waitForCall(client *goesl.Client, operatorPrefix, destination string) bool 
 
 		msg, err := client.ReadMessage()
 		if err != nil {
-			if !strings.Contains(err.Error(), "EOF") && err.Error() != "unexpected end of JSON input" {
-				goesl.Error("Error while reading Freeswitch message: %s", err)
-			}
+			handleReadError(err)
 			break
 		}
 
-		// if connected, then stop
-		if msg.Headers["Action"] == "add-member" && msg.Headers["Answer-State"] == "early" && msg.Headers["Caller-Destination-Number"] == operatorPrefix+destination {
+		if isConnected(msg, operatorPrefix, destination) {
 			goesl.Debug("%q received call, exiting initConferenceHandler", operatorPrefix+destination)
 			return false
 		}
 
-		// if callee is not available, then stop
-		if msg.Headers["Answer-State"] == "hangup" && msg.Headers["Caller-Destination-Number"] == operatorPrefix+destination && slices.Contains(sipCalleeUnavailableCode, msg.Headers["variable_hangup_cause_q850"]) {
-			goesl.Debug(`%q has a problem, please contact callee %q.\n
-				code - %q, reason - %q`,
-				operatorPrefix+destination, destination,
-				msg.Headers["variable_hangup_cause_q850"], msg.Headers["variable_sip_invite_failure_phrase"])
+		if isCalleeUnavailable(msg, operatorPrefix, destination) {
+			logCalleeIssue(msg, operatorPrefix, destination)
 			return true
 		}
 
-		// if operator has a problem, then skip
-		if msg.Headers["Answer-State"] == "hangup" && msg.Headers["Caller-Destination-Number"] == operatorPrefix+destination && slices.Contains(sipOperatorUnavailableCode, msg.Headers["variable_hangup_cause_q850"]) {
-			goesl.Debug(`%q has a problem, please contact operator %q.\n
-				code - %q, reason - %q`,
-				operatorPrefix+destination, operatorPrefix,
-				msg.Headers["variable_hangup_cause_q850"], msg.Headers["variable_sip_invite_failure_phrase"])
+		if isOperatorUnavailable(msg, operatorPrefix, destination) {
+			logOperatorIssue(msg, operatorPrefix)
 			continue
 		}
 	}
 	return true
+}
+
+func handleReadError(err error) {
+	if !strings.Contains(err.Error(), "EOF") && err.Error() != "unexpected end of JSON input" {
+		goesl.Error("Error while reading Freeswitch message: %s", err)
+	}
+}
+
+func isConnected(msg *goesl.Message, operatorPrefix, destination string) bool {
+	return msg.Headers["Action"] == "add-member" &&
+		msg.Headers[answerStateHeader] == "early" &&
+		msg.Headers[callerDestinationHeader] == operatorPrefix+destination
+}
+
+func isCalleeUnavailable(msg *goesl.Message, operatorPrefix, destination string) bool {
+	return msg.Headers[answerStateHeader] == "hangup" &&
+		msg.Headers[callerDestinationHeader] == operatorPrefix+destination &&
+		slices.Contains(sipCalleeUnavailableCode, msg.Headers["variable_hangup_cause_q850"])
+}
+
+func logCalleeIssue(msg *goesl.Message, operatorPrefix, destination string) {
+	goesl.Debug(`%q has a problem, please contact callee %q.\n
+		code - %q, reason - %q`,
+		operatorPrefix+destination, destination,
+		msg.Headers["variable_hangup_cause_q850"], msg.Headers["variable_sip_invite_failure_phrase"])
+}
+
+func isOperatorUnavailable(msg *goesl.Message, operatorPrefix, destination string) bool {
+	return msg.Headers[answerStateHeader] == "hangup" &&
+		msg.Headers[callerDestinationHeader] == operatorPrefix+destination &&
+		slices.Contains(sipOperatorUnavailableCode, msg.Headers["variable_hangup_cause_q850"])
+}
+
+func logOperatorIssue(msg *goesl.Message, operatorPrefix string) {
+	goesl.Debug(`%q has a problem, please contact operator %q.\n
+		code - %q, reason - %q`,
+		operatorPrefix, operatorPrefix,
+		msg.Headers["variable_hangup_cause_q850"], msg.Headers["variable_sip_invite_failure_phrase"])
 }
