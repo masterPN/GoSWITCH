@@ -124,6 +124,10 @@ func createBaseClassesMap(baseClasses, operatorPrefixes []string) map[string]str
 }
 
 func originateCalls(client *goesl.Client, initConferenceData []string, routingResponse data.ImgCdrOperatorRoutingData, baseClassesMap map[string]string, externalDomain string, sipPort int, msg map[string]string) error {
+	if validateRadius(client, initConferenceData, msg) {
+		return nil
+	}
+
 	baseClassResponse := [4]int{
 		routingResponse.BaseClass1,
 		routingResponse.BaseClass2,
@@ -131,27 +135,22 @@ func originateCalls(client *goesl.Client, initConferenceData []string, routingRe
 		routingResponse.BaseClass4,
 	}
 
-	for i, response := range baseClassResponse {
+	for _, response := range baseClassResponse {
 		if response == 0 {
 			continue
 		}
 
 		if operatorPrefix, exists := baseClassesMap[strconv.Itoa(response)]; exists && operatorPrefix != "" {
-			if validateRadius(client, initConferenceData, msg) {
-				continue
-			}
 
 			if originateCall(client, initConferenceData, operatorPrefix, externalDomain, sipPort) {
 				return nil
 			}
 		}
-
-		if i == len(baseClassResponse)-1 {
-			goesl.Debug("There's no operator available.")
-			client.BgApi(fmt.Sprintf(destroyConferenceCommand, initConferenceData[1]))
-			http.Get(fmt.Sprintf("http://redis-service:8080/popRadiusAccountingData/%s", initConferenceData[1]))
-		}
 	}
+
+	goesl.Debug("There's no operator available.")
+	client.BgApi(fmt.Sprintf(destroyConferenceCommand, initConferenceData[1]))
+	http.Get(fmt.Sprintf("http://redis-service:8080/popRadiusAccountingData/%s", initConferenceData[1]))
 	return nil
 }
 
