@@ -171,7 +171,7 @@ func waitForCall(client *goesl.Client, operatorPrefix, destination string, confe
 		if time.Since(startTime) > 5*time.Second {
 			break
 		} else if time.Since(startTime) > 2*time.Second {
-			once.Do(func() {
+			go once.Do(func() {
 				client.BgApi("show channels")
 			})
 		}
