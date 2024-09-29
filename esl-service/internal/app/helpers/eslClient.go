@@ -1,13 +1,21 @@
-package app
+package helpers
 
 import (
+	"flag"
 	"strings"
 
 	"github.com/0x19/goesl"
 )
 
-func CreateClient(host string, port uint, password string, timeout int) (*goesl.Client, error) {
-	client, err := goesl.NewClient(host, port, password, timeout)
+var (
+	fshost   = flag.String("fshost", "host.docker.internal", "Freeswitch hostname. Default: localhost")
+	fsport   = flag.Uint("fsport", 8021, "Freeswitch port. Default: 8021")
+	password = flag.String("pass", "ClueCon", "Freeswitch password. Default: ClueCon")
+	timeout  = flag.Int("timeout", 10, "Freeswitch conneciton timeout in seconds. Default: 10")
+)
+
+func CreateClient() (*goesl.Client, error) {
+	client, err := goesl.NewClient(*fshost, *fsport, *password, *timeout)
 	if err != nil {
 		goesl.Error("Error while creating new client: %s", err)
 		return nil, err
