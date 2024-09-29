@@ -166,7 +166,7 @@ func waitForCall(client *goesl.Client, operatorPrefix, destination string, confe
 	startTime := time.Now()
 	for {
 		if time.Since(startTime) > 5*time.Second {
-			continue
+			break
 		}
 
 		msg, err := client.ReadMessage()
