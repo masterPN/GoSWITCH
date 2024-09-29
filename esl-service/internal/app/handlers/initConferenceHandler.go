@@ -3,6 +3,7 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
+	"esl-service/internal/app/helpers"
 	"esl-service/internal/data"
 	"fmt"
 	"log"
@@ -163,6 +164,12 @@ func originateCall(client *goesl.Client, initConferenceData []string, operatorPr
 }
 
 func waitForCall(client *goesl.Client, operatorPrefix, destination string, conferenceName string) bool {
+	secondaryClient, err := helpers.CreateClient()
+	if err != nil {
+		goesl.Debug("Create secondary client in waitForCall failed!")
+		return false
+	}
+
 	startTime := time.Now()
 	var once sync.Once
 
@@ -175,7 +182,7 @@ func waitForCall(client *goesl.Client, operatorPrefix, destination string, confe
 			})
 		}
 
-		msg, err := client.ReadMessage()
+		msg, err := secondaryClient.ReadMessage()
 		if err != nil {
 			handleReadError(err)
 			break
