@@ -169,6 +169,7 @@ func waitForCall(client *goesl.Client, operatorPrefix, destination string, confe
 		goesl.Debug("Create secondary client in waitForCall failed!")
 		return false
 	}
+	defer secondaryClient.Close()
 
 	startTime := time.Now()
 	var once sync.Once
