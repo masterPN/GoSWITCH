@@ -165,8 +165,9 @@ func originateCall(client *goesl.Client, initConferenceData []string, operatorPr
 
 func waitForCall(client *goesl.Client, operatorPrefix, destination string, conferenceName string) bool {
 	startTime := time.Now()
+	var once sync.Once
+
 	for {
-		var once sync.Once
 
 		if time.Since(startTime) > 5*time.Second {
 			break
