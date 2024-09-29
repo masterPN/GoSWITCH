@@ -37,7 +37,7 @@ func InitConferenceHandler(client *goesl.Client, msg map[string]string) {
 	}
 
 	baseClassesMap := createBaseClassesMap(baseClasses, operatorPrefixes)
-	if err := originateCalls(client, initConferenceData, operatorRoutingResponse, baseClassesMap, externalDomain, sipPort); err != nil {
+	if err := originateCalls(client, initConferenceData, operatorRoutingResponse, baseClassesMap, externalDomain, sipPort, msg); err != nil {
 		log.Printf("Error originating calls: %s\n", err)
 	}
 }
@@ -50,9 +50,9 @@ func loadConfig() (int, string, []string, []string) {
 	return sipPort, externalDomain, baseClasses, operatorPrefixes
 }
 
-func validateRadius(client *goesl.Client, initConferenceData []string, operatorPrefix string) bool {
+func validateRadius(client *goesl.Client, initConferenceData []string, msg map[string]string) bool {
 	postBody, _ := json.Marshal(map[string]string{
-		"prefix":            operatorPrefix,
+		"prefix":            strings.Replace(msg[callerDestinationHeader], initConferenceData[3], "", 1),
 		"callingNumber":     initConferenceData[2],
 		"destinationNumber": initConferenceData[3],
 	})
@@ -76,7 +76,7 @@ func validateRadius(client *goesl.Client, initConferenceData []string, operatorP
 	}
 
 	postBody, _ = json.Marshal(map[string]string{
-		"accessNo":     operatorPrefix,
+		"accessNo":     radiusResponse.PrefixNo,
 		"anino":        initConferenceData[2],
 		"destNo":       initConferenceData[3],
 		"subscriberNo": radiusResponse.AccountNum,
@@ -122,7 +122,7 @@ func createBaseClassesMap(baseClasses, operatorPrefixes []string) map[string]str
 	return baseClassesMap
 }
 
-func originateCalls(client *goesl.Client, initConferenceData []string, routingResponse data.ImgCdrOperatorRoutingData, baseClassesMap map[string]string, externalDomain string, sipPort int) error {
+func originateCalls(client *goesl.Client, initConferenceData []string, routingResponse data.ImgCdrOperatorRoutingData, baseClassesMap map[string]string, externalDomain string, sipPort int, msg map[string]string) error {
 	baseClassResponse := [4]int{
 		routingResponse.BaseClass1,
 		routingResponse.BaseClass2,
@@ -136,7 +136,7 @@ func originateCalls(client *goesl.Client, initConferenceData []string, routingRe
 		}
 
 		if operatorPrefix, exists := baseClassesMap[strconv.Itoa(response)]; exists && operatorPrefix != "" {
-			if validateRadius(client, initConferenceData, operatorPrefix) {
+			if validateRadius(client, initConferenceData, msg) {
 				continue
 			}
 
