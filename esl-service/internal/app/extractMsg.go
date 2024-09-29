@@ -24,7 +24,7 @@ func Execute(client *goesl.Client, msg map[string]string) {
 
 	switch {
 	case strings.Contains(applicationData, "initConference") && eventName == "CHANNEL_EXECUTE_COMPLETE":
-		goesl.Debug("initConference\n %q", applicationData)
+		goesl.Debug("%q\n %q", applicationData, msg)
 		go handlers.InitConferenceHandler(client, msg)
 	case strings.Contains(answerState, "answered") &&
 		strings.Contains(callDirection, "outbound") &&
