@@ -11,6 +11,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/0x19/goesl"
@@ -165,6 +166,8 @@ func originateCall(client *goesl.Client, initConferenceData []string, operatorPr
 func waitForCall(client *goesl.Client, operatorPrefix, destination string, conferenceName string) bool {
 	startTime := time.Now()
 	for {
+		var once sync.Once
+
 		if time.Since(startTime) > 5*time.Second {
 			break
 		}
@@ -191,6 +194,10 @@ func waitForCall(client *goesl.Client, operatorPrefix, destination string, confe
 			logOperatorIssue(msg, operatorPrefix)
 			return false
 		}
+
+		once.Do(func() {
+			client.BgApi("show channels")
+		})
 	}
 	return false
 }
@@ -202,9 +209,13 @@ func handleReadError(err error) {
 }
 
 func isConnected(msg *goesl.Message, operatorPrefix, destination string) bool {
-	return msg.Headers["Action"] == "add-member" &&
+	return (msg.Headers["Action"] == "add-member" &&
 		msg.Headers[answerStateHeader] == "early" &&
-		msg.Headers[callerDestinationHeader] == operatorPrefix+destination
+		msg.Headers[callerDestinationHeader] == operatorPrefix+destination) ||
+		(msg.Headers["Event-Calling-Function"] == "bgapi_exec" &&
+			msg.Headers["Job-Command"] == "show" &&
+			msg.Headers["Job-Command-Arg"] == "channels" &&
+			strings.Contains(msg.Headers["body"], operatorPrefix+destination+",conference"))
 }
 
 func isCalleeUnavailable(msg *goesl.Message, operatorPrefix, destination string) bool {
