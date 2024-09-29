@@ -168,9 +168,12 @@ func waitForCall(client *goesl.Client, operatorPrefix, destination string, confe
 	var once sync.Once
 
 	for {
-
 		if time.Since(startTime) > 5*time.Second {
 			break
+		} else if time.Since(startTime) > 2*time.Second {
+			once.Do(func() {
+				client.BgApi("show channels")
+			})
 		}
 
 		msg, err := client.ReadMessage()
@@ -195,11 +198,8 @@ func waitForCall(client *goesl.Client, operatorPrefix, destination string, confe
 			logOperatorIssue(msg, operatorPrefix)
 			return false
 		}
-
-		once.Do(func() {
-			client.BgApi("show channels")
-		})
 	}
+
 	goesl.Debug("WARNING - There's no matched case for %q", operatorPrefix+destination)
 	return false
 }
