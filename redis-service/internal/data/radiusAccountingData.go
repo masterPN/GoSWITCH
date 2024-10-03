@@ -40,7 +40,23 @@ func (r RadiusAccountingDataModel) Set(input RadiusAccountingData) error {
 
 	data := make(map[string]interface{})
 
-	// Only add fields that are not empty or zero
+	// Populate the data map with non-empty fields
+	populateData(data, input)
+
+	// Set only the fields that are not nil or empty
+	if len(data) > 0 {
+		err := r.DB.HSet(ctx, input.SessionID, data).Err()
+		if err != nil {
+			log.Fatalf("Could not set hash: %v", err)
+			return err
+		}
+	}
+
+	return nil
+}
+
+// populateData fills the provided map with non-empty fields from the input.
+func populateData(data map[string]interface{}, input RadiusAccountingData) {
 	if input.ConfID != 0 {
 		data["confID"] = input.ConfID
 	}
@@ -92,17 +108,6 @@ func (r RadiusAccountingDataModel) Set(input RadiusAccountingData) error {
 	if input.LanguageCode != "" {
 		data["languageCode"] = input.LanguageCode
 	}
-
-	// Set only the fields that are not nil or empty
-	if len(data) > 0 {
-		err := r.DB.HSet(ctx, input.SessionID, data).Err()
-		if err != nil {
-			log.Fatalf("Could not set hash: %v", err)
-			return err
-		}
-	}
-
-	return nil
 }
 
 func (r RadiusAccountingDataModel) Pop(sessionID string) (RadiusAccountingData, error) {
