@@ -83,6 +83,8 @@ func validateRadius(client *goesl.Client, initConferenceData []string, msg map[s
 		"destNo":       initConferenceData[3],
 		"subscriberNo": radiusResponse.AccountNum,
 		"sessionID":    initConferenceData[1],
+		"inTrunkID":    "",
+		"reasonID":     strconv.Itoa(radiusResponse.Status),
 	})
 
 	_, err = http.Post("http://redis-service:8080/saveRadiusAccountingData", "application/json", bytes.NewBuffer(postBody))
@@ -136,14 +138,14 @@ func originateCalls(client *goesl.Client, initConferenceData []string, routingRe
 		routingResponse.BaseClass4,
 	}
 
-	for _, response := range baseClassResponse {
+	for baseClass, response := range baseClassResponse {
 		if response == 0 {
 			continue
 		}
 
 		if operatorPrefix, exists := baseClassesMap[strconv.Itoa(response)]; exists && operatorPrefix != "" {
 
-			if originateCall(client, initConferenceData, operatorPrefix, externalDomain, sipPort) {
+			if originateCall(client, initConferenceData, baseClass, operatorPrefix, externalDomain, sipPort) {
 				return nil
 			}
 		}
@@ -155,15 +157,15 @@ func originateCalls(client *goesl.Client, initConferenceData []string, routingRe
 	return nil
 }
 
-func originateCall(client *goesl.Client, initConferenceData []string, operatorPrefix, externalDomain string, sipPort int) bool {
+func originateCall(client *goesl.Client, initConferenceData []string, baseClass int, operatorPrefix, externalDomain string, sipPort int) bool {
 	client.BgApi(fmt.Sprintf("originate {origination_caller_id_number=%s}sofia/external/%s%s@%s:%v &conference(%s)",
 		initConferenceData[2], operatorPrefix, prepareDestinationNumber(initConferenceData[3]), externalDomain, sipPort,
 		initConferenceData[1]))
 
-	return waitForCall(client, operatorPrefix, prepareDestinationNumber(initConferenceData[3]), initConferenceData[1])
+	return waitForCall(client, baseClass, operatorPrefix, prepareDestinationNumber(initConferenceData[3]), initConferenceData[1])
 }
 
-func waitForCall(client *goesl.Client, operatorPrefix, destination string, conferenceName string) bool {
+func waitForCall(client *goesl.Client, baseClass int, operatorPrefix, destination string, conferenceName string) bool {
 	secondaryClient, err := helpers.CreateClient()
 	if err != nil {
 		goesl.Debug("Create secondary client in waitForCall failed!")
@@ -191,6 +193,19 @@ func waitForCall(client *goesl.Client, operatorPrefix, destination string, confe
 
 		if isConnected(msg, operatorPrefix, destination) {
 			goesl.Debug("%q received call, exiting initConferenceHandler", operatorPrefix+destination)
+
+			postBody, _ := json.Marshal(map[string]string{
+				"sessionID":  conferenceName,
+				"outTrunkID": strconv.Itoa(baseClass),
+			})
+
+			_, err = http.Post("http://redis-service:8080/saveRadiusAccountingData", "application/json", bytes.NewBuffer(postBody))
+			if err != nil {
+				log.Printf("POST http://redis-service:8080/saveRadiusAccountingData - %s\n", err)
+				client.BgApi(fmt.Sprintf(destroyConferenceCommand, conferenceName))
+				return true
+			}
+
 			return true
 		}
 

@@ -43,9 +43,6 @@ func EndConferenceHandler(client *goesl.Client, msg map[string]string) {
 	respBody.CategoryID = "N"
 	respBody.CallDuration = int(hangupTime.Sub(talkingTime).Seconds())
 	respBody.ReleaseCode = msg["variable_hangup_cause_q850"]
-	respBody.InTrunkID = 25
-	respBody.OutTrunkID = 601
-	respBody.ReasonID = 0
 	respBody.LanguageCode = ""
 
 	_, err = http.Post("http://mssql-service:8080/radiusAccounting", "application/json", respBody)
