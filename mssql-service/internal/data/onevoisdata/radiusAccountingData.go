@@ -12,7 +12,7 @@ type RadiusAccountingData struct {
 	RemainMoney float64 `json:"REMAINMONEY"`
 }
 
-type RadiusAccountingInput struct {
+type RadiusAccounting struct {
 	ConfID       int    `json:"confID"`
 	AccessNo     string `json:"accessNo"`
 	Anino        string `json:"anino"`
@@ -36,7 +36,7 @@ type RadiusAccountingDataModel struct {
 	DB *sql.DB
 }
 
-func (r RadiusAccountingDataModel) ExecuteRadiusAccounting(input RadiusAccountingInput) (RadiusAccountingData, error) {
+func (r RadiusAccountingDataModel) ExecuteRadiusAccounting(input RadiusAccounting) (RadiusAccountingData, error) {
 	query := `EXEC RADIUS_ACCOUNTING
 				@CONF_ID = $1,
 				@ACCESS_NO = $2,

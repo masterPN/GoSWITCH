@@ -26,7 +26,7 @@ func EndConferenceHandler(client *goesl.Client, msg map[string]string) {
 	if err != nil {
 		log.Printf("GET http://redis-service:8080/popRadiusAccountingData/%s: could not reead response body - %s\n", msg["variable_conference_name"], err)
 	}
-	var respBody data.RadiusAccountingInput
+	var respBody data.RadiusAccounting
 	json.Unmarshal(respBodyByte, &respBody)
 
 	hangupTimeUnix, _ := strconv.Atoi(msg["Caller-Channel-Hangup-Time"])

@@ -47,7 +47,7 @@ func (s *Server) ExecuteRadiusOnestageValidateHandler(c *gin.Context) {
 }
 
 func (s *Server) ExecuteRadiusAccountingHandler(c *gin.Context) {
-	var input onevoisdata.RadiusAccountingInput
+	var input onevoisdata.RadiusAccounting
 	c.BindJSON(&input)
 
 	result, err := s.onevoisModels.RadiusAccountingData.ExecuteRadiusAccounting(input)

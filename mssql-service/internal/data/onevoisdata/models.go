@@ -7,7 +7,7 @@ type Models struct {
 		ExecuteRadiusOnestageValidate(prefix string, callingNumber string, destinationNumber string) (RadiusOnestageValidateData, error)
 	}
 	RadiusAccountingData interface {
-		ExecuteRadiusAccounting(input RadiusAccountingInput) (RadiusAccountingData, error)
+		ExecuteRadiusAccounting(input RadiusAccounting) (RadiusAccountingData, error)
 	}
 }
 
