@@ -168,7 +168,7 @@ func originateCall(client *goesl.Client, initConferenceData []string, baseClass 
 	return waitForCall(client, baseClass, operatorPrefix, prepareDestinationNumber(initConferenceData[3]), initConferenceData[1])
 }
 
-func waitForCall(client *goesl.Client, baseClass int, operatorPrefix, destination string, conferenceName string) bool {
+func waitForCall(client *goesl.Client, baseClass int, operatorPrefix, destination, conferenceName string) bool {
 	secondaryClient, err := helpers.CreateClient()
 	if err != nil {
 		goesl.Debug("Create secondary client in waitForCall failed!")
@@ -180,13 +180,11 @@ func waitForCall(client *goesl.Client, baseClass int, operatorPrefix, destinatio
 	var once sync.Once
 
 	for {
-		if time.Since(startTime) > 5*time.Second {
+		if !withinTimeout(startTime) {
 			break
-		} else if time.Since(startTime) > 2*time.Second {
-			go once.Do(func() {
-				client.BgApi("show channels")
-			})
 		}
+
+		handleBgApiCall(client, startTime, &once)
 
 		msg, err := secondaryClient.ReadMessage()
 		if err != nil {
@@ -194,30 +192,7 @@ func waitForCall(client *goesl.Client, baseClass int, operatorPrefix, destinatio
 			break
 		}
 
-		if isConnected(msg, operatorPrefix, destination) {
-			goesl.Debug("%q received call, exiting initConferenceHandler", operatorPrefix+destination)
-
-			radiusAccountingBody := data.RadiusAccounting{
-				SessionID:  conferenceName,
-				OutTrunkID: baseClass,
-			}
-
-			postBody, _ := json.Marshal(radiusAccountingBody)
-
-			_, err = http.Post("http://redis-service:8080/saveRadiusAccountingData", jsonContentType, bytes.NewBuffer(postBody))
-			if err != nil {
-				log.Printf("POST http://redis-service:8080/saveRadiusAccountingData - %s\n", err)
-				client.BgApi(fmt.Sprintf(destroyConferenceCommand, conferenceName))
-				return true
-			}
-
-			return true
-		}
-
-		if isCalleeUnavailable(msg, operatorPrefix, destination) {
-			logCalleeIssue(msg, operatorPrefix, destination)
-			client.BgApi(fmt.Sprintf(destroyConferenceCommand, conferenceName))
-			http.Get(fmt.Sprintf("http://redis-service:8080/popRadiusAccountingData/%s", conferenceName))
+		if handleCalleeAndConnected(msg, client, baseClass, operatorPrefix, destination, conferenceName) {
 			return true
 		}
 
@@ -229,6 +204,57 @@ func waitForCall(client *goesl.Client, baseClass int, operatorPrefix, destinatio
 
 	goesl.Debug("WARNING - There's no matched case for %q", operatorPrefix+destination)
 	return false
+}
+
+func withinTimeout(startTime time.Time) bool {
+	return time.Since(startTime) <= 5*time.Second
+}
+
+func handleBgApiCall(client *goesl.Client, startTime time.Time, once *sync.Once) {
+	if time.Since(startTime) > 2*time.Second {
+		once.Do(func() {
+			client.BgApi("show channels")
+		})
+	}
+}
+
+func handleCalleeAndConnected(msg *goesl.Message, client *goesl.Client, baseClass int, operatorPrefix, destination, conferenceName string) bool {
+	if isConnected(msg, operatorPrefix, destination) {
+		return handleConnectedCall(client, baseClass, conferenceName)
+	}
+
+	if isCalleeUnavailable(msg, operatorPrefix, destination) {
+		handleCalleeIssue(client, msg, operatorPrefix, destination, conferenceName)
+		return true
+	}
+
+	return false
+}
+
+func handleConnectedCall(client *goesl.Client, baseClass int, conferenceName string) bool {
+	goesl.Debug("Received call, exiting initConferenceHandler")
+
+	radiusAccountingBody := data.RadiusAccounting{
+		SessionID:  conferenceName,
+		OutTrunkID: baseClass,
+	}
+
+	postBody, _ := json.Marshal(radiusAccountingBody)
+
+	_, err := http.Post("http://redis-service:8080/saveRadiusAccountingData", jsonContentType, bytes.NewBuffer(postBody))
+	if err != nil {
+		log.Printf("POST http://redis-service:8080/saveRadiusAccountingData - %s\n", err)
+		client.BgApi(fmt.Sprintf(destroyConferenceCommand, conferenceName))
+		return true
+	}
+
+	return true
+}
+
+func handleCalleeIssue(client *goesl.Client, msg *goesl.Message, operatorPrefix, destination, conferenceName string) {
+	logCalleeIssue(msg, operatorPrefix, destination)
+	client.BgApi(fmt.Sprintf(destroyConferenceCommand, conferenceName))
+	http.Get(fmt.Sprintf("http://redis-service:8080/popRadiusAccountingData/%s", conferenceName))
 }
 
 func handleReadError(err error) {
