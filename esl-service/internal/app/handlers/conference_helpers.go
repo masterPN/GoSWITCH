@@ -114,13 +114,13 @@ func initiateConferenceCalls(client *goesl.Client, initConferenceData []string, 
 		routingResponse.BaseClass4,
 	}
 
-	for baseClass, response := range baseClassResponse {
+	for _, response := range baseClassResponse {
 		if response == 0 {
 			continue
 		}
 
 		if operatorPrefix, exists := baseClassesMap[strconv.Itoa(response)]; exists && operatorPrefix != "" {
-			if originateCall(client, initConferenceData, baseClass, operatorPrefix, externalDomain, sipPort) {
+			if originateCall(client, initConferenceData, response, operatorPrefix, externalDomain, sipPort) {
 				return nil
 			}
 		}
