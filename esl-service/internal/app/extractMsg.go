@@ -31,7 +31,7 @@ func Execute(client *goesl.Client, msg map[string]string) {
 		strings.Contains(eventFunction, "switch_channel_perform_mark_answered"):
 		// Callee accepts the call
 		goesl.Debug("callee accepted\n %q", msg)
-		go handlers.JoinConferenceHandler(msg)
+		go handlers.HandleConferenceJoin(msg)
 	case strings.Contains(answerState, "hangup") &&
 		strings.Contains(callDirection, "inbound") &&
 		strings.Contains(eventFunction, "switch_core_session_perform_destroy"):
