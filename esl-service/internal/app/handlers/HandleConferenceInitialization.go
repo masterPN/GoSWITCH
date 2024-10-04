@@ -25,27 +25,30 @@ const (
 	jsonContentType          = "application/json"
 )
 
-var sipOperatorUnavailableCode = []string{"1", "41"}
-var sipCalleeUnavailableCode = []string{"17"}
+var (
+	sipOperatorUnavailableCode = []string{"1", "41"}
+	sipCalleeUnavailableCode   = []string{"17"}
+)
 
-func InitConferenceHandler(client *goesl.Client, msg map[string]string) {
-	sipPort, externalDomain, baseClasses, operatorPrefixes := loadConfig()
+func HandleConferenceInitialization(client *goesl.Client, msg map[string]string) {
+	sipPort, externalDomain, baseClasses, operatorPrefixes := loadConfiguration()
 
 	initConferenceData := strings.Split(msg["variable_current_application_data"], ", ")
 
-	operatorRoutingResponse, err := getOperatorRouting(prepareDestinationNumber(initConferenceData[3]))
+	operatorRoutingResponse, err := fetchOperatorRouting(normalizeDestinationNumber(initConferenceData[3]))
 	if err != nil {
 		log.Printf("Error fetching operator routing: %s\n", err)
 		return
 	}
 
-	baseClassesMap := createBaseClassesMap(baseClasses, operatorPrefixes)
-	if err := originateCalls(client, initConferenceData, operatorRoutingResponse, baseClassesMap, externalDomain, sipPort, msg); err != nil {
+	baseClassesMap := createBaseClassToOperatorPrefixMapping(baseClasses, operatorPrefixes)
+	err = initiateConferenceCalls(client, initConferenceData, operatorRoutingResponse, baseClassesMap, externalDomain, sipPort, msg)
+	if err != nil {
 		log.Printf("Error originating calls: %s\n", err)
 	}
 }
 
-func loadConfig() (int, string, []string, []string) {
+func loadConfiguration() (int, string, []string, []string) {
 	sipPort, _ := strconv.Atoi(os.Getenv("SIP_PORT"))
 	externalDomain := os.Getenv("EXTERNAL_DOMAIN")
 	baseClasses := strings.Split(os.Getenv("BASE_CLASS"), ",")
@@ -53,44 +56,44 @@ func loadConfig() (int, string, []string, []string) {
 	return sipPort, externalDomain, baseClasses, operatorPrefixes
 }
 
-func validateRadius(client *goesl.Client, initConferenceData []string, msg map[string]string) bool {
-	postBody, _ := json.Marshal(map[string]string{
-		"prefix":            strings.Replace(msg[callerDestinationHeader], initConferenceData[3], "", 1),
-		"callingNumber":     initConferenceData[2],
-		"destinationNumber": initConferenceData[3],
+func validateRadiusAndHandleConference(client *goesl.Client, conferenceInitData []string, msg map[string]string) bool {
+	radiusValidationRequest, _ := json.Marshal(map[string]string{
+		"prefix":            strings.Replace(msg[callerDestinationHeader], conferenceInitData[3], "", 1),
+		"callingNumber":     conferenceInitData[2],
+		"destinationNumber": conferenceInitData[3],
 	})
-	resp, err := http.Post("http://mssql-service:8080/radiusOnestageValidate", jsonContentType, bytes.NewBuffer(postBody))
+	radiusValidationResponse, err := http.Post("http://mssql-service:8080/radiusOnestageValidate", jsonContentType, bytes.NewBuffer(radiusValidationRequest))
 	if err != nil {
 		log.Printf("Error validating radius: %s\n", err)
 		return true
 	}
-	defer resp.Body.Close()
+	defer radiusValidationResponse.Body.Close()
 
-	var radiusResponse data.RadiusOnestageValidateData
-	if err := json.NewDecoder(resp.Body).Decode(&radiusResponse); err != nil {
+	var radiusValidationResponseData data.RadiusOnestageValidateData
+	if err := json.NewDecoder(radiusValidationResponse.Body).Decode(&radiusValidationResponseData); err != nil {
 		log.Printf("Error decoding radius response: %s\n", err)
 		return true
 	}
 
-	if radiusResponse.Status > 2 {
-		client.BgApi(fmt.Sprintf(destroyConferenceCommand, initConferenceData[1]))
-		log.Printf("Kicked due to radius status %v\n", radiusResponse.Status)
+	if radiusValidationResponseData.Status > 2 {
+		client.BgApi(fmt.Sprintf(destroyConferenceCommand, conferenceInitData[1]))
+		log.Printf("Kicked due to radius status %v\n", radiusValidationResponseData.Status)
 		return true
 	}
 
-	radiusAccountingBody := data.RadiusAccounting{
-		AccessNo:     radiusResponse.PrefixNo,
-		Anino:        initConferenceData[2],
-		DestNo:       initConferenceData[3],
-		SubscriberNo: radiusResponse.AccountNum,
-		SessionID:    initConferenceData[1],
+	radiusAccountingData := data.RadiusAccounting{
+		AccessNo:     radiusValidationResponseData.PrefixNo,
+		Anino:        conferenceInitData[2],
+		DestNo:       conferenceInitData[3],
+		SubscriberNo: radiusValidationResponseData.AccountNum,
+		SessionID:    conferenceInitData[1],
 		InTrunkID:    0,
-		ReasonID:     radiusResponse.Status,
+		ReasonID:     radiusValidationResponseData.Status,
 	}
 
-	postBody, _ = json.Marshal(radiusAccountingBody)
+	radiusAccountingRequest, _ := json.Marshal(radiusAccountingData)
 
-	_, err = http.Post("http://redis-service:8080/saveRadiusAccountingData", jsonContentType, bytes.NewBuffer(postBody))
+	_, err = http.Post("http://redis-service:8080/saveRadiusAccountingData", jsonContentType, bytes.NewBuffer(radiusAccountingRequest))
 	if err != nil {
 		log.Printf("POST http://redis-service:8080/saveRadiusAccountingData - %s\n", err)
 		return true
@@ -99,7 +102,7 @@ func validateRadius(client *goesl.Client, initConferenceData []string, msg map[s
 	return false
 }
 
-func prepareDestinationNumber(destination string) string {
+func normalizeDestinationNumber(destination string) string {
 	// Begin with 0, means local call
 	if len(destination) > 0 && destination[0] == '0' {
 		return "66" + destination[1:]
@@ -107,7 +110,7 @@ func prepareDestinationNumber(destination string) string {
 	return destination
 }
 
-func getOperatorRouting(destination string) (data.ImgCdrOperatorRoutingData, error) {
+func fetchOperatorRouting(destination string) (data.ImgCdrOperatorRoutingData, error) {
 	resp, err := http.Get(fmt.Sprintf("http://mssql-service:8080/operatorRouting?number=%s", destination))
 	if err != nil {
 		return data.ImgCdrOperatorRoutingData{}, err
@@ -121,16 +124,16 @@ func getOperatorRouting(destination string) (data.ImgCdrOperatorRoutingData, err
 	return routingResponse, nil
 }
 
-func createBaseClassesMap(baseClasses, operatorPrefixes []string) map[string]string {
-	baseClassesMap := make(map[string]string)
-	for i, v := range baseClasses {
-		baseClassesMap[v] = operatorPrefixes[i]
+func createBaseClassToOperatorPrefixMapping(baseClasses, operatorPrefixes []string) map[string]string {
+	baseClassToOperatorPrefixMap := make(map[string]string)
+	for i, baseClass := range baseClasses {
+		baseClassToOperatorPrefixMap[baseClass] = operatorPrefixes[i]
 	}
-	return baseClassesMap
+	return baseClassToOperatorPrefixMap
 }
 
-func originateCalls(client *goesl.Client, initConferenceData []string, routingResponse data.ImgCdrOperatorRoutingData, baseClassesMap map[string]string, externalDomain string, sipPort int, msg map[string]string) error {
-	if validateRadius(client, initConferenceData, msg) {
+func initiateConferenceCalls(client *goesl.Client, initConferenceData []string, routingResponse data.ImgCdrOperatorRoutingData, baseClassesMap map[string]string, externalDomain string, sipPort int, msg map[string]string) error {
+	if validateRadiusAndHandleConference(client, initConferenceData, msg) {
 		return nil
 	}
 
@@ -147,7 +150,6 @@ func originateCalls(client *goesl.Client, initConferenceData []string, routingRe
 		}
 
 		if operatorPrefix, exists := baseClassesMap[strconv.Itoa(response)]; exists && operatorPrefix != "" {
-
 			if originateCall(client, initConferenceData, baseClass, operatorPrefix, externalDomain, sipPort) {
 				return nil
 			}
@@ -162,10 +164,10 @@ func originateCalls(client *goesl.Client, initConferenceData []string, routingRe
 
 func originateCall(client *goesl.Client, initConferenceData []string, baseClass int, operatorPrefix, externalDomain string, sipPort int) bool {
 	client.BgApi(fmt.Sprintf("originate {origination_caller_id_number=%s}sofia/external/%s%s@%s:%v &conference(%s)",
-		initConferenceData[2], operatorPrefix, prepareDestinationNumber(initConferenceData[3]), externalDomain, sipPort,
+		initConferenceData[2], operatorPrefix, normalizeDestinationNumber(initConferenceData[3]), externalDomain, sipPort,
 		initConferenceData[1]))
 
-	return waitForCall(client, baseClass, operatorPrefix, prepareDestinationNumber(initConferenceData[3]), initConferenceData[1])
+	return waitForCall(client, baseClass, operatorPrefix, normalizeDestinationNumber(initConferenceData[3]), initConferenceData[1])
 }
 
 func waitForCall(client *goesl.Client, baseClass int, operatorPrefix, destination, conferenceName string) bool {
