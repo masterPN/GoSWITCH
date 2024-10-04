@@ -26,6 +26,10 @@ func HandleConferenceJoin(eventData map[string]string) {
 		TalkingTime: callAnsweredTime.Format(timeFormat),
 	}
 
+	saveToRedis(radiusAccountingData)
+}
+
+func saveToRedis(radiusAccountingData data.RadiusAccounting) {
 	postBody, _ := json.Marshal(radiusAccountingData)
 
 	_, err := http.Post("http://redis-service:8080/saveRadiusAccountingData", "application/json", bytes.NewBuffer(postBody))
