@@ -22,6 +22,7 @@ const (
 	answerStateHeader        = "Answer-State"
 	callerDestinationHeader  = "Caller-Destination-Number"
 	destroyConferenceCommand = "conference %v kick all"
+	jsonContentType          = "application/json"
 )
 
 var sipOperatorUnavailableCode = []string{"1", "41"}
@@ -58,7 +59,7 @@ func validateRadius(client *goesl.Client, initConferenceData []string, msg map[s
 		"callingNumber":     initConferenceData[2],
 		"destinationNumber": initConferenceData[3],
 	})
-	resp, err := http.Post("http://mssql-service:8080/radiusOnestageValidate", "application/json", bytes.NewBuffer(postBody))
+	resp, err := http.Post("http://mssql-service:8080/radiusOnestageValidate", jsonContentType, bytes.NewBuffer(postBody))
 	if err != nil {
 		log.Printf("Error validating radius: %s\n", err)
 		return true
@@ -89,7 +90,7 @@ func validateRadius(client *goesl.Client, initConferenceData []string, msg map[s
 
 	postBody, _ = json.Marshal(radiusAccountingBody)
 
-	_, err = http.Post("http://redis-service:8080/saveRadiusAccountingData", "application/json", bytes.NewBuffer(postBody))
+	_, err = http.Post("http://redis-service:8080/saveRadiusAccountingData", jsonContentType, bytes.NewBuffer(postBody))
 	if err != nil {
 		log.Printf("POST http://redis-service:8080/saveRadiusAccountingData - %s\n", err)
 		return true
@@ -203,7 +204,7 @@ func waitForCall(client *goesl.Client, baseClass int, operatorPrefix, destinatio
 
 			postBody, _ := json.Marshal(radiusAccountingBody)
 
-			_, err = http.Post("http://redis-service:8080/saveRadiusAccountingData", "application/json", bytes.NewBuffer(postBody))
+			_, err = http.Post("http://redis-service:8080/saveRadiusAccountingData", jsonContentType, bytes.NewBuffer(postBody))
 			if err != nil {
 				log.Printf("POST http://redis-service:8080/saveRadiusAccountingData - %s\n", err)
 				client.BgApi(fmt.Sprintf(destroyConferenceCommand, conferenceName))
