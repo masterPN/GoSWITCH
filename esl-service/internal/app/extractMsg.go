@@ -36,6 +36,6 @@ func Execute(client *goesl.Client, msg map[string]string) {
 		strings.Contains(callDirection, "inbound") &&
 		strings.Contains(eventFunction, "switch_core_session_perform_destroy"):
 		goesl.Debug("end conference\n %q", msg)
-		go handlers.EndConferenceHandler(client, msg)
+		go handlers.HandleConferenceEnd(client, msg)
 	}
 }
