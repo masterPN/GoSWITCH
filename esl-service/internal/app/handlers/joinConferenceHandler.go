@@ -3,6 +3,7 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
+	"esl-service/internal/data"
 	"log"
 	"net/http"
 	"strconv"
@@ -19,11 +20,13 @@ func JoinConferenceHandler(msg map[string]string) {
 	startTime := time.UnixMicro(int64(startTimeUnix))
 	talkingTime := time.UnixMicro(int64(TalkingTimeUnix))
 
-	postBody, _ := json.Marshal(map[string]string{
-		"sessionID":   msg["variable_conference_name"],
-		"startTime":   startTime.Format(timeFormat),
-		"talkingTime": talkingTime.Format(timeFormat),
-	})
+	radiusAccountingBody := data.RadiusAccounting{
+		SessionID:   msg["variable_conference_name"],
+		StartTime:   startTime.Format(timeFormat),
+		TalkingTime: talkingTime.Format(timeFormat),
+	}
+
+	postBody, _ := json.Marshal(radiusAccountingBody)
 
 	_, err := http.Post("http://redis-service:8080/saveRadiusAccountingData", "application/json", bytes.NewBuffer(postBody))
 	if err != nil {

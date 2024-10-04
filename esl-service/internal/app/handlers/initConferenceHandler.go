@@ -77,15 +77,17 @@ func validateRadius(client *goesl.Client, initConferenceData []string, msg map[s
 		return true
 	}
 
-	postBody, _ = json.Marshal(map[string]string{
-		"accessNo":     radiusResponse.PrefixNo,
-		"anino":        initConferenceData[2],
-		"destNo":       initConferenceData[3],
-		"subscriberNo": radiusResponse.AccountNum,
-		"sessionID":    initConferenceData[1],
-		"inTrunkID":    "",
-		"reasonID":     strconv.Itoa(radiusResponse.Status),
-	})
+	radiusAccountingBody := data.RadiusAccounting{
+		AccessNo:     radiusResponse.PrefixNo,
+		Anino:        initConferenceData[2],
+		DestNo:       initConferenceData[3],
+		SubscriberNo: radiusResponse.AccountNum,
+		SessionID:    initConferenceData[1],
+		InTrunkID:    0,
+		ReasonID:     radiusResponse.Status,
+	}
+
+	postBody, _ = json.Marshal(radiusAccountingBody)
 
 	_, err = http.Post("http://redis-service:8080/saveRadiusAccountingData", "application/json", bytes.NewBuffer(postBody))
 	if err != nil {
@@ -194,10 +196,12 @@ func waitForCall(client *goesl.Client, baseClass int, operatorPrefix, destinatio
 		if isConnected(msg, operatorPrefix, destination) {
 			goesl.Debug("%q received call, exiting initConferenceHandler", operatorPrefix+destination)
 
-			postBody, _ := json.Marshal(map[string]string{
-				"sessionID":  conferenceName,
-				"outTrunkID": strconv.Itoa(baseClass),
-			})
+			radiusAccountingBody := data.RadiusAccounting{
+				SessionID:  conferenceName,
+				OutTrunkID: baseClass,
+			}
+
+			postBody, _ := json.Marshal(radiusAccountingBody)
 
 			_, err = http.Post("http://redis-service:8080/saveRadiusAccountingData", "application/json", bytes.NewBuffer(postBody))
 			if err != nil {
