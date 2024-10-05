@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"esl-service/internal/app/helpers"
 	"esl-service/internal/data"
 	"fmt"
 	"io"
@@ -53,7 +54,7 @@ func updateMsSql(redisData *data.RadiusAccounting, eventData map[string]string) 
 		hangupTime = nilTime
 	}
 
-	redisData.ConfID = 65716
+	redisData.ConfID = helpers.GenerateRandomFiveDigitNumber()
 	redisData.Pwd = ""
 	redisData.CategoryID = "N"
 	redisData.CallDuration = int(hangupTime.Sub(talkingStartTime).Seconds())
