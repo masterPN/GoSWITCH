@@ -50,7 +50,7 @@ func updateMsSql(redisData *data.RadiusAccounting, eventData map[string]string) 
 
 	hangupTimeUnix, _ := strconv.Atoi(eventData["Caller-Channel-Hangup-Time"])
 	hangupTime := time.UnixMicro(int64(hangupTimeUnix)).In(loc)
-	talkingStartTime, _ := time.Parse(timeFormat, redisData.TalkingTime)
+	talkingStartTime, _ := time.ParseInLocation(timeFormat, redisData.TalkingTime, loc)
 
 	if nilTime, _ := time.Parse(timeFormat, "01/01/0001 00:00:00"); talkingStartTime == nilTime {
 		hangupTime = nilTime
