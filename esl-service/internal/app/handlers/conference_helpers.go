@@ -29,8 +29,8 @@ func loadConfiguration() (int, string, []string, []string) {
 func validateRadiusAndHandleConference(client *goesl.Client, conferenceInitData []string, msg map[string]string) bool {
 	radiusValidationRequest, _ := json.Marshal(map[string]string{
 		"prefix":            strings.Replace(msg[callerDestinationHeader], conferenceInitData[3], "", 1),
-		"callingNumber":     conferenceInitData[2],
-		"destinationNumber": conferenceInitData[3],
+		"callingNumber":     normalizeDestinationNumber(conferenceInitData[2]),
+		"destinationNumber": normalizeDestinationNumber(conferenceInitData[3]),
 	})
 	radiusValidationResponse, err := http.Post("http://mssql-service:8080/radiusOnestageValidate", jsonContentType, bytes.NewBuffer(radiusValidationRequest))
 	if err != nil {
@@ -53,8 +53,8 @@ func validateRadiusAndHandleConference(client *goesl.Client, conferenceInitData 
 
 	radiusAccountingData := data.RadiusAccounting{
 		AccessNo:     radiusValidationResponseData.PrefixNo,
-		Anino:        conferenceInitData[2],
-		DestNo:       conferenceInitData[3],
+		Anino:        normalizeDestinationNumber(conferenceInitData[2]),
+		DestNo:       normalizeDestinationNumber(conferenceInitData[3]),
 		SubscriberNo: radiusValidationResponseData.AccountNum,
 		SessionID:    conferenceInitData[1],
 		InTrunkID:    0,
