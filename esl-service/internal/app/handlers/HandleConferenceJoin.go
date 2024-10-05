@@ -15,10 +15,12 @@ const (
 )
 
 func HandleConferenceJoin(eventData map[string]string) {
+	loc, _ := time.LoadLocation("Asia/Bangkok")
+
 	callStartTimeUnix, _ := strconv.Atoi(eventData["Caller-Channel-Created-Time"])
 	callAnsweredTimeUnix, _ := strconv.Atoi(eventData["Caller-Channel-Answered-Time"])
-	callStartTime := time.UnixMicro(int64(callStartTimeUnix))
-	callAnsweredTime := time.UnixMicro(int64(callAnsweredTimeUnix))
+	callStartTime := time.UnixMicro(int64(callStartTimeUnix)).In(loc)
+	callAnsweredTime := time.UnixMicro(int64(callAnsweredTimeUnix)).In(loc)
 
 	radiusAccountingData := data.RadiusAccounting{
 		SessionID:   eventData["variable_conference_name"],

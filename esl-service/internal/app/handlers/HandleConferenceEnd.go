@@ -46,8 +46,10 @@ func getRedisData(conferenceName string) *data.RadiusAccounting {
 }
 
 func updateMsSql(redisData *data.RadiusAccounting, eventData map[string]string) {
+	loc, _ := time.LoadLocation("Asia/Bangkok")
+
 	hangupTimeUnix, _ := strconv.Atoi(eventData["Caller-Channel-Hangup-Time"])
-	hangupTime := time.UnixMicro(int64(hangupTimeUnix))
+	hangupTime := time.UnixMicro(int64(hangupTimeUnix)).In(loc)
 	talkingStartTime, _ := time.Parse(timeFormat, redisData.TalkingTime)
 
 	if nilTime, _ := time.Parse(timeFormat, "01/01/0001 00:00:00"); talkingStartTime == nilTime {
