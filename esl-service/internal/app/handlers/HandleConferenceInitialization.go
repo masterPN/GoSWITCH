@@ -24,14 +24,8 @@ func HandleConferenceInitialization(client *goesl.Client, msg map[string]string)
 
 	initConferenceData := strings.Split(msg["variable_current_application_data"], ", ")
 
-	operatorRoutingResponse, err := fetchOperatorRouting(normalizeDestinationNumber(initConferenceData[3]))
-	if err != nil {
-		log.Printf("Error fetching operator routing: %s\n", err)
-		return
-	}
-
 	baseClassesMap := createBaseClassToOperatorPrefixMapping(baseClasses, operatorPrefixes)
-	err = initiateConferenceCalls(client, initConferenceData, operatorRoutingResponse, baseClassesMap, externalDomain, sipPort, msg)
+	err := initiateConferenceCalls(client, initConferenceData, baseClassesMap, externalDomain, sipPort, msg)
 	if err != nil {
 		log.Printf("Error originating calls: %s\n", err)
 	}

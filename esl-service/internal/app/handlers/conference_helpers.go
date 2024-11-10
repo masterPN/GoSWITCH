@@ -102,8 +102,14 @@ func createBaseClassToOperatorPrefixMapping(baseClasses, operatorPrefixes []stri
 	return baseClassToOperatorPrefixMap
 }
 
-func initiateConferenceCalls(client *goesl.Client, initConferenceData []string, routingResponse data.ImgCdrOperatorRoutingData, baseClassesMap map[string]string, externalDomain string, sipPort int, msg map[string]string) error {
+func initiateConferenceCalls(client *goesl.Client, initConferenceData []string, baseClassesMap map[string]string, externalDomain string, sipPort int, msg map[string]string) error {
 	if validateRadiusAndHandleConference(client, initConferenceData, msg) {
+		return nil
+	}
+
+	routingResponse, err := fetchOperatorRouting(normalizeDestinationNumber(initConferenceData[3]))
+	if err != nil {
+		log.Printf("Error fetching operator routing: %s\n", err)
 		return nil
 	}
 
