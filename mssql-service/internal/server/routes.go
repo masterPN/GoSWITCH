@@ -14,6 +14,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	r.GET("/", s.HelloWorldHandler)
 	r.GET("/operatorRouting", s.GetOperatorRoutingHandler)
 	r.GET("/optimalRoute", s.ExecuteGetOptimalRouteHandler)
+	r.GET("/internalCodemapping", s.FetchAllInternalCodemappings)
 	r.POST("/radiusOnestageValidate", s.ExecuteRadiusOnestageValidateHandler)
 	r.POST("/radiusAccounting", s.ExecuteRadiusAccountingHandler)
 
@@ -84,6 +85,19 @@ func (s *Server) ExecuteGetOptimalRouteHandler(c *gin.Context) {
 	result, err := s.wholesaleModels.OptimalRouteData.ExecuteGetOptimalRoute(pCallString)
 	if err != nil {
 		c.Error(fmt.Errorf("ExecuteGetOptimalRouteHandler with %q - %q", pCallString, err.Error()))
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
+}
+
+func (s *Server) FetchAllInternalCodemappings(c *gin.Context) {
+	result, err := s.wholesaleModels.InternalCodemappingData.GetAll()
+	if err != nil {
+		c.Error(fmt.Errorf("GetAllInternalCodemappingHandler - %q", err.Error()))
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
