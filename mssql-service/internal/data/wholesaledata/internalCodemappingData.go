@@ -17,23 +17,25 @@ func (r InternalCodemappingDataModel) GetAll() ([]InternalCodemappingData, error
 
 	rows, err := r.DB.Query(query)
 	if err != nil {
-		panic(err.Error())
+		return nil, err
 	}
-
 	defer rows.Close()
 
 	var internalCodemapping InternalCodemappingData
+	var internalCodemappings []InternalCodemappingData
+
 	for rows.Next() {
 		err := rows.Scan(&internalCodemapping.ID, &internalCodemapping.InternalCode, &internalCodemapping.OperatorCode)
 		if err != nil {
-			panic(err.Error())
+			return nil, err
 		}
+		internalCodemappings = append(internalCodemappings, internalCodemapping)
 	}
 
 	err = rows.Err()
 	if err != nil {
-		panic(err.Error())
+		return nil, err
 	}
 
-	return []InternalCodemappingData{internalCodemapping}, nil
+	return internalCodemappings, nil
 }
