@@ -18,12 +18,10 @@ import (
 	"github.com/0x19/goesl"
 )
 
-func loadConfiguration() (int, string, []string, []string) {
+func loadConfiguration() (int, string) {
 	sipPort, _ := strconv.Atoi(os.Getenv("SIP_PORT"))
 	externalDomain := os.Getenv("EXTERNAL_DOMAIN")
-	baseClasses := strings.Split(os.Getenv("BASE_CLASS"), ",")
-	operatorPrefixes := strings.Split(os.Getenv("OPERATOR_PREFIX"), ",")
-	return sipPort, externalDomain, baseClasses, operatorPrefixes
+	return sipPort, externalDomain
 }
 
 func validateRadiusAndHandleConference(client *goesl.Client, conferenceInitData []string, msg map[string]string) bool {
@@ -94,15 +92,7 @@ func fetchOperatorRouting(destination string) (data.ImgCdrOperatorRoutingData, e
 	return routingResponse, nil
 }
 
-func createBaseClassToOperatorPrefixMapping(baseClasses, operatorPrefixes []string) map[string]string {
-	baseClassToOperatorPrefixMap := make(map[string]string)
-	for i, baseClass := range baseClasses {
-		baseClassToOperatorPrefixMap[baseClass] = operatorPrefixes[i]
-	}
-	return baseClassToOperatorPrefixMap
-}
-
-func initiateConferenceCalls(client *goesl.Client, initConferenceData []string, baseClassesMap map[string]string, externalDomain string, sipPort int, msg map[string]string) error {
+func initiateConferenceCalls(client *goesl.Client, initConferenceData []string, externalDomain string, sipPort int, msg map[string]string) error {
 	if validateRadiusAndHandleConference(client, initConferenceData, msg) {
 		return nil
 	}
@@ -125,10 +115,10 @@ func initiateConferenceCalls(client *goesl.Client, initConferenceData []string, 
 			continue
 		}
 
-		if operatorPrefix, exists := baseClassesMap[strconv.Itoa(response)]; exists && operatorPrefix != "" {
-			if originateCall(client, initConferenceData, response, operatorPrefix, externalDomain, sipPort) {
-				return nil
-			}
+		// TODO - implement each available operatorPreefix
+		operatorPrefix := "69999" // TODO - pass each value via calling mssql service - optimal route
+		if originateCall(client, initConferenceData, response, operatorPrefix, externalDomain, sipPort) {
+			return nil
 		}
 	}
 

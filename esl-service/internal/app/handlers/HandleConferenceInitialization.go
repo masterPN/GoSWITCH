@@ -20,12 +20,11 @@ var (
 )
 
 func HandleConferenceInitialization(client *goesl.Client, msg map[string]string) {
-	sipPort, externalDomain, baseClasses, operatorPrefixes := loadConfiguration()
+	sipPort, externalDomain := loadConfiguration()
 
 	initConferenceData := strings.Split(msg["variable_current_application_data"], ", ")
 
-	baseClassesMap := createBaseClassToOperatorPrefixMapping(baseClasses, operatorPrefixes)
-	err := initiateConferenceCalls(client, initConferenceData, baseClassesMap, externalDomain, sipPort, msg)
+	err := initiateConferenceCalls(client, initConferenceData, externalDomain, sipPort, msg)
 	if err != nil {
 		log.Printf("Error originating calls: %s\n", err)
 	}
