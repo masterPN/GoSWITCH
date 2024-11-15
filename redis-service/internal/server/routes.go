@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"redis-service/internal/data"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -15,6 +16,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	r.POST("/saveRadiusAccountingData", s.SaveRadiusAccountingDataHandler)
 	r.GET("/popRadiusAccountingData/:anino", s.PopRadiusAccountingDataHandler)
 	r.POST("/setInternalCodemappingData", s.SetInternalCodemappingDataHandler)
+	r.GET("/getInternalCodemappingData/:internalCode", s.GetInternalCodemappingDataHandler)
 	r.DELETE("/deleteInternalCodemappingData", s.DeleteInternalCodemappingDataHandler)
 
 	return r
@@ -75,6 +77,30 @@ func (s *Server) SetInternalCodemappingDataHandler(c *gin.Context) {
 		"message": "Internal Codemapping Data saved successfully",
 		"data":    input,
 	})
+}
+
+func (s *Server) GetInternalCodemappingDataHandler(c *gin.Context) {
+	internalCodeString := c.Param("internalCode")
+	internalCode, err := strconv.Atoi(internalCodeString)
+	if err != nil {
+		c.Error(fmt.Errorf("GetInternalCodemappingDataHandler with %q - %q", internalCode, err.Error()))
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	internalCodemappingData, err := s.models.InternalCodemappingData.Get(internalCode)
+	if err != nil {
+		c.Error(fmt.Errorf("GetInternalCodemappingDataHandler with %q - %q", internalCode, err.Error()))
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":                   err.Error(),
+			"internalCodemappingData": internalCodemappingData,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, internalCodemappingData)
 }
 
 func (s *Server) DeleteInternalCodemappingDataHandler(c *gin.Context) {
