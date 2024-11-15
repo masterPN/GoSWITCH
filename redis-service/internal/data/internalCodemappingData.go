@@ -30,7 +30,7 @@ func (r InternalCodemappingDataModel) Set(input InternalCodemappingData) error {
 
 	// Set only the fields that are not nil or empty
 	if len(data) > 0 {
-		err := r.DB.HSet(ctx, "internalCodemapping:"+strconv.Itoa(input.ID), data).Err()
+		err := r.DB.HSet(ctx, "internalCodemapping:"+strconv.Itoa(input.InternalCode), data).Err()
 		if err != nil {
 			log.Fatalf("Could not set hash: %v", err)
 			return err
