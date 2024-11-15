@@ -39,6 +39,7 @@ func (r InternalCodemappingDataModel) Set(input InternalCodemappingData) error {
 
 	return nil
 }
+
 func (r InternalCodemappingDataModel) populateData(data map[string]interface{}, input *InternalCodemappingData) {
 	if input.ID != 0 {
 		data["ID"] = strconv.Itoa(input.ID)
@@ -51,7 +52,8 @@ func (r InternalCodemappingDataModel) populateData(data map[string]interface{}, 
 	}
 }
 
-func (r *InternalCodemappingDataModel) ClearAllRecords(ctx context.Context) error {
+func (r *InternalCodemappingDataModel) ClearAllRecords() error {
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 	keys, err := r.DB.Keys(ctx, "internalCodemapping:*").Result()
 	if err != nil {
 		return err
