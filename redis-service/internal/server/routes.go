@@ -14,6 +14,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	r.GET("/", s.HelloWorldHandler)
 	r.POST("/saveRadiusAccountingData", s.SaveRadiusAccountingDataHandler)
 	r.GET("/popRadiusAccountingData/:anino", s.PopRadiusAccountingDataHandler)
+	r.POST("/setInternalCodemappingData", s.SetInternalCodemappingDataHandler)
 
 	return r
 }
@@ -55,4 +56,22 @@ func (s *Server) PopRadiusAccountingDataHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, radiusAccountingData)
+}
+
+func (s *Server) SetInternalCodemappingDataHandler(c *gin.Context) {
+	var input data.InternalCodemappingData
+	c.BindJSON(&input)
+
+	err := s.models.InternalCodemappingData.Set(input)
+	if err != nil {
+		c.Error(fmt.Errorf("SetInternalCodemappingDataHandler with %q - %q", input, err.Error()))
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+	}
+
+	c.JSON(http.StatusOK, map[string]interface{}{
+		"message": "Internal Codemapping Data saved successfully",
+		"data":    input,
+	})
 }
