@@ -11,6 +11,7 @@ type Models struct {
 	}
 	InternalCodemappingData interface {
 		Set(input InternalCodemappingData) error
+		Get(internalCode int) (InternalCodemappingData, error)
 		Delete(internalCode int) error
 	}
 }
