@@ -2,6 +2,7 @@ package data
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"strconv"
 	"time"
@@ -50,4 +51,20 @@ func (r InternalCodemappingDataModel) populateData(data map[string]interface{}, 
 	if input.OperatorCode != 0 {
 		data["OperatorCode"] = strconv.Itoa(input.OperatorCode)
 	}
+}
+
+func (r InternalCodemappingDataModel) Delete(internalCode int) error {
+	if internalCode <= 0 {
+		return fmt.Errorf("invalid internal code: %d", internalCode)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	err := r.DB.Del(ctx, "internalCodemapping:"+strconv.Itoa(internalCode)).Err()
+	if err != nil {
+		return fmt.Errorf("failed to delete internal code mapping: %w", err)
+	}
+
+	return nil
 }
