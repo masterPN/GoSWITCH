@@ -37,11 +37,10 @@ func initiateConferenceCalls(client *goesl.Client, initConferenceData []string, 
 		return nil
 	}
 
-	baseClassResponse := [4]int{
-		routingResponse.BaseClass1,
-		routingResponse.BaseClass2,
-		routingResponse.BaseClass3,
-		routingResponse.BaseClass4,
+	baseClassResponse := []int{
+		routingResponse.Class1,
+		routingResponse.Class2,
+		routingResponse.Class3,
 	}
 
 	for _, response := range baseClassResponse {
@@ -112,16 +111,16 @@ func validateRadiusAndHandleConference(client *goesl.Client, conferenceInitData 
 }
 
 // Fetch operator routing for a given destination
-func fetchOperatorRouting(destination string) (data.ImgCdrOperatorRoutingData, error) {
-	resp, err := http.Get(fmt.Sprintf("http://mssql-service:8080/operatorRouting?number=%s", destination))
+func fetchOperatorRouting(destination string) (data.OptimalRouteData, error) {
+	resp, err := http.Get(fmt.Sprintf("http://mssql-service:8080/optimalRoute?pCallString=%s", destination))
 	if err != nil {
-		return data.ImgCdrOperatorRoutingData{}, err
+		return data.OptimalRouteData{}, err
 	}
 	defer resp.Body.Close()
 
-	var routingResponse data.ImgCdrOperatorRoutingData
+	var routingResponse data.OptimalRouteData
 	if err := json.NewDecoder(resp.Body).Decode(&routingResponse); err != nil {
-		return data.ImgCdrOperatorRoutingData{}, err
+		return data.OptimalRouteData{}, err
 	}
 	return routingResponse, nil
 }
