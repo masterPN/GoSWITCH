@@ -11,7 +11,7 @@ type Models struct {
 	}
 	InternalCodemappingData interface {
 		Set(input InternalCodemappingData) error
-		ClearAllRecords() error
+		Delete(internalCode int) error
 	}
 }
 
