@@ -41,7 +41,7 @@ func (r RadiusAccountingDataModel) Set(input RadiusAccountingData) error {
 	data := make(map[string]interface{})
 
 	// Populate the data map with non-empty fields
-	populateData(data, input)
+	r.populateData(data, input)
 
 	// Set only the fields that are not nil or empty
 	if len(data) > 0 {
@@ -56,7 +56,7 @@ func (r RadiusAccountingDataModel) Set(input RadiusAccountingData) error {
 }
 
 // populateData fills the provided map with non-empty fields from the input.
-func populateData(data map[string]interface{}, input RadiusAccountingData) {
+func (r RadiusAccountingDataModel) populateData(data map[string]interface{}, input RadiusAccountingData) {
 	if input.ConfID != 0 {
 		data["confID"] = input.ConfID
 	}
