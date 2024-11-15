@@ -18,18 +18,59 @@ import (
 	"github.com/0x19/goesl"
 )
 
+// Configuration loading function
 func loadConfiguration() (int, string) {
 	sipPort, _ := strconv.Atoi(os.Getenv("SIP_PORT"))
 	externalDomain := os.Getenv("EXTERNAL_DOMAIN")
 	return sipPort, externalDomain
 }
 
+// Main Conference Call handler
+func initiateConferenceCalls(client *goesl.Client, initConferenceData []string, externalDomain string, sipPort int, msg map[string]string) error {
+	if validateRadiusAndHandleConference(client, initConferenceData, msg) {
+		return nil
+	}
+
+	routingResponse, err := fetchOperatorRouting(helpers.NormalizeDestinationNumber(initConferenceData[3]))
+	if err != nil {
+		log.Printf("Error fetching operator routing: %s\n", err)
+		return nil
+	}
+
+	baseClassResponse := [4]int{
+		routingResponse.BaseClass1,
+		routingResponse.BaseClass2,
+		routingResponse.BaseClass3,
+		routingResponse.BaseClass4,
+	}
+
+	for _, response := range baseClassResponse {
+		if response == 0 {
+			continue
+		}
+
+		operatorPrefix := "69999" // TODO - pass each value via calling mssql service - optimal route
+		if originateCall(client, initConferenceData, response, operatorPrefix, externalDomain, sipPort) {
+			return nil
+		}
+	}
+
+	goesl.Debug("There's no operator available.")
+	client.BgApi(fmt.Sprintf(destroyConferenceCommand, initConferenceData[1]))
+	http.Get(fmt.Sprintf("http://redis-service:8080/popRadiusAccountingData/%s", initConferenceData[1]))
+	return nil
+}
+
+// Helper functions for network communication
+
+// Validate radius and handle conference destruction if necessary
 func validateRadiusAndHandleConference(client *goesl.Client, conferenceInitData []string, msg map[string]string) bool {
 	radiusValidationRequest, _ := json.Marshal(map[string]string{
 		"prefix":            strings.Replace(msg[callerDestinationHeader], conferenceInitData[3], "", 1),
-		"callingNumber":     normalizeDestinationNumber(conferenceInitData[2]),
-		"destinationNumber": normalizeDestinationNumber(conferenceInitData[3]),
+		"callingNumber":     helpers.NormalizeDestinationNumber(conferenceInitData[2]),
+		"destinationNumber": helpers.NormalizeDestinationNumber(conferenceInitData[3]),
 	})
+
 	radiusValidationResponse, err := http.Post("http://mssql-service:8080/radiusOnestageValidate", jsonContentType, bytes.NewBuffer(radiusValidationRequest))
 	if err != nil {
 		log.Printf("Error validating radius: %s\n", err)
@@ -51,8 +92,8 @@ func validateRadiusAndHandleConference(client *goesl.Client, conferenceInitData 
 
 	radiusAccountingData := data.RadiusAccounting{
 		AccessNo:     radiusValidationResponseData.PrefixNo,
-		Anino:        normalizeDestinationNumber(conferenceInitData[2]),
-		DestNo:       normalizeDestinationNumber(conferenceInitData[3]),
+		Anino:        helpers.NormalizeDestinationNumber(conferenceInitData[2]),
+		DestNo:       helpers.NormalizeDestinationNumber(conferenceInitData[3]),
 		SubscriberNo: radiusValidationResponseData.AccountNum,
 		SessionID:    conferenceInitData[1],
 		InTrunkID:    0,
@@ -70,14 +111,7 @@ func validateRadiusAndHandleConference(client *goesl.Client, conferenceInitData 
 	return false
 }
 
-func normalizeDestinationNumber(destination string) string {
-	// Begin with 0, means local call
-	if len(destination) > 0 && destination[0] == '0' {
-		return "66" + destination[1:]
-	}
-	return destination
-}
-
+// Fetch operator routing for a given destination
 func fetchOperatorRouting(destination string) (data.ImgCdrOperatorRoutingData, error) {
 	resp, err := http.Get(fmt.Sprintf("http://mssql-service:8080/operatorRouting?number=%s", destination))
 	if err != nil {
@@ -92,50 +126,17 @@ func fetchOperatorRouting(destination string) (data.ImgCdrOperatorRoutingData, e
 	return routingResponse, nil
 }
 
-func initiateConferenceCalls(client *goesl.Client, initConferenceData []string, externalDomain string, sipPort int, msg map[string]string) error {
-	if validateRadiusAndHandleConference(client, initConferenceData, msg) {
-		return nil
-	}
-
-	routingResponse, err := fetchOperatorRouting(normalizeDestinationNumber(initConferenceData[3]))
-	if err != nil {
-		log.Printf("Error fetching operator routing: %s\n", err)
-		return nil
-	}
-
-	baseClassResponse := [4]int{
-		routingResponse.BaseClass1,
-		routingResponse.BaseClass2,
-		routingResponse.BaseClass3,
-		routingResponse.BaseClass4,
-	}
-
-	for _, response := range baseClassResponse {
-		if response == 0 {
-			continue
-		}
-
-		// TODO - implement each available operatorPreefix
-		operatorPrefix := "69999" // TODO - pass each value via calling mssql service - optimal route
-		if originateCall(client, initConferenceData, response, operatorPrefix, externalDomain, sipPort) {
-			return nil
-		}
-	}
-
-	goesl.Debug("There's no operator available.")
-	client.BgApi(fmt.Sprintf(destroyConferenceCommand, initConferenceData[1]))
-	http.Get(fmt.Sprintf("http://redis-service:8080/popRadiusAccountingData/%s", initConferenceData[1]))
-	return nil
-}
+// Originate call to a given operator
 
 func originateCall(client *goesl.Client, initConferenceData []string, baseClass int, operatorPrefix, externalDomain string, sipPort int) bool {
 	client.BgApi(fmt.Sprintf("originate {origination_caller_id_number=%s}sofia/external/%s%s@%s:%v &conference(%s)",
-		initConferenceData[2], operatorPrefix, normalizeDestinationNumber(initConferenceData[3]), externalDomain, sipPort,
+		initConferenceData[2], operatorPrefix, helpers.NormalizeDestinationNumber(initConferenceData[3]), externalDomain, sipPort,
 		initConferenceData[1]))
 
-	return waitForCall(client, baseClass, operatorPrefix, normalizeDestinationNumber(initConferenceData[3]), initConferenceData[1])
+	return waitForCall(client, baseClass, operatorPrefix, helpers.NormalizeDestinationNumber(initConferenceData[3]), initConferenceData[1])
 }
 
+// Wait for the call to be established and handle various states
 func waitForCall(client *goesl.Client, baseClass int, operatorPrefix, destination, conferenceName string) bool {
 	secondaryClient, err := helpers.CreateClient()
 	if err != nil {
@@ -174,6 +175,8 @@ func waitForCall(client *goesl.Client, baseClass int, operatorPrefix, destinatio
 	return false
 }
 
+// Helper functions for processing call results
+
 func withinTimeout(startTime time.Time) bool {
 	return time.Since(startTime) <= 5*time.Second
 }
@@ -198,6 +201,8 @@ func handleCalleeAndConnected(msg *goesl.Message, client *goesl.Client, baseClas
 
 	return false
 }
+
+// Helper functions for managing specific call states
 
 func handleConnectedCall(client *goesl.Client, baseClass int, conferenceName string) bool {
 	goesl.Debug("Received call, exiting initConferenceHandler")
