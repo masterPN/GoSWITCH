@@ -15,6 +15,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	r.POST("/saveRadiusAccountingData", s.SaveRadiusAccountingDataHandler)
 	r.GET("/popRadiusAccountingData/:anino", s.PopRadiusAccountingDataHandler)
 	r.POST("/setInternalCodemappingData", s.SetInternalCodemappingDataHandler)
+	r.DELETE("/deleteInternalCodemappingData", s.DeleteInternalCodemappingDataHandler)
 
 	return r
 }
@@ -72,6 +73,25 @@ func (s *Server) SetInternalCodemappingDataHandler(c *gin.Context) {
 
 	c.JSON(http.StatusOK, map[string]interface{}{
 		"message": "Internal Codemapping Data saved successfully",
+		"data":    input,
+	})
+}
+
+func (s *Server) DeleteInternalCodemappingDataHandler(c *gin.Context) {
+	var input data.InternalCodemappingData
+	c.BindJSON(&input)
+
+	err := s.models.InternalCodemappingData.Delete(input.InternalCode)
+	if err != nil {
+		c.Error(fmt.Errorf("DeleteInternalCodemappingDataHandler with %q - %q", input, err.Error()))
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, map[string]interface{}{
+		"message": "Internal Codemapping Data deleted successfully",
 		"data":    input,
 	})
 }
