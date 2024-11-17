@@ -48,8 +48,14 @@ func initiateConferenceCalls(client *goesl.Client, initConferenceData []string, 
 			continue
 		}
 
-		operatorPrefix := "69999" // TODO - pass each value via calling mssql service - optimal route
-		if originateCall(client, initConferenceData, response, operatorPrefix, externalDomain, sipPort) {
+		operatorMapping, err := fetchInternalCodemapping(strconv.Itoa(response))
+		if err != nil {
+			log.Printf("Error fetching internal code mapping: %s\n", err)
+			return err
+		}
+
+		operatorPrefix := operatorMapping.OperatorCode
+		if originateCall(client, initConferenceData, response, strconv.Itoa(operatorPrefix), externalDomain, sipPort) {
 			return nil
 		}
 	}
