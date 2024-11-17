@@ -125,6 +125,21 @@ func fetchOperatorRouting(destination string) (data.OptimalRouteData, error) {
 	return routingResponse, nil
 }
 
+// Fetch the route data for a given route
+func fetchInternalCodemapping(internalCode string) (data.InternalCodemappingData, error) {
+	resp, err := http.Get(fmt.Sprintf("http://mssql-service:8080/internalCodemapping/internalCode=%s", internalCode))
+	if err != nil {
+		return data.InternalCodemappingData{}, err
+	}
+	defer resp.Body.Close()
+
+	var internalCodemappingResponse data.InternalCodemappingData
+	if err := json.NewDecoder(resp.Body).Decode(&internalCodemappingResponse); err != nil {
+		return data.InternalCodemappingData{}, err
+	}
+	return internalCodemappingResponse, nil
+}
+
 // Originate call to a given operator
 
 func originateCall(client *goesl.Client, initConferenceData []string, baseClass int, operatorPrefix, externalDomain string, sipPort int) bool {
