@@ -5,3 +5,8 @@ type InternalCodemappingData struct {
 	InternalCode int `json:"InternalCode"`
 	OperatorCode int `json:"OperatorCode"`
 }
+
+type InternalCodemappingDataError struct {
+	Error                   string                  `json:"error"`
+	InternalCodemappingData InternalCodemappingData `json:"internalCodemappingData"`
+}

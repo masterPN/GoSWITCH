@@ -140,10 +140,7 @@ func fetchInternalCodemapping(internalCode string) (data.InternalCodemappingData
 	defer resp.Body.Close()
 
 	if resp.StatusCode == http.StatusBadRequest {
-		var internalCodemappingResponse struct {
-			Error                   string                       `json:"error"`
-			InternalCodemappingData data.InternalCodemappingData `json:"internalCodemappingData"`
-		}
+		var internalCodemappingResponse data.InternalCodemappingDataError
 
 		if err := json.NewDecoder(resp.Body).Decode(&internalCodemappingResponse); err != nil {
 			return data.InternalCodemappingData{}, err
