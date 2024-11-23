@@ -133,7 +133,7 @@ func fetchOperatorRouting(destination string) (data.OptimalRouteData, error) {
 
 // Fetch the route data for a given route
 func fetchInternalCodemapping(internalCode string) (data.InternalCodemappingData, error) {
-	resp, err := http.Get(fmt.Sprintf("http://redis-service:8080/internalCodemapping/internalCode=%s", internalCode))
+	resp, err := http.Get(fmt.Sprintf("http://redis-service:8080/internalCodemappingData/%s", internalCode))
 	if err != nil {
 		return data.InternalCodemappingData{}, err
 	}
