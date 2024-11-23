@@ -34,7 +34,7 @@ func initiateConferenceCalls(client *goesl.Client, initConferenceData []string, 
 	routingResponse, err := fetchOperatorRouting(helpers.NormalizeDestinationNumber(initConferenceData[3]))
 	if err != nil {
 		log.Printf("Error fetching operator routing: %s\n", err)
-		return nil
+		return err
 	}
 
 	baseClassResponse := []int{
@@ -51,7 +51,7 @@ func initiateConferenceCalls(client *goesl.Client, initConferenceData []string, 
 		operatorMapping, err := fetchInternalCodemapping(strconv.Itoa(response))
 		if err != nil {
 			log.Printf("Error fetching internal code mapping: %s\n", err)
-			return err
+			continue
 		}
 
 		operatorPrefix := operatorMapping.OperatorCode
@@ -139,8 +139,21 @@ func fetchInternalCodemapping(internalCode string) (data.InternalCodemappingData
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode == http.StatusBadRequest {
+		var internalCodemappingResponse struct {
+			Error                   string                       `json:"error"`
+			InternalCodemappingData data.InternalCodemappingData `json:"internalCodemappingData"`
+		}
+
+		if err := json.NewDecoder(resp.Body).Decode(&internalCodemappingResponse); err != nil {
+			return data.InternalCodemappingData{}, err
+		}
+
+		return internalCodemappingResponse.InternalCodemappingData, fmt.Errorf(internalCodemappingResponse.Error)
+	}
+
 	var internalCodemappingResponse data.InternalCodemappingData
-	if err := json.NewDecoder(resp.Body).Decode(&internalCodemappingResponse); err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(&internalCodemappingResponse); resp.StatusCode == http.StatusOK && err != nil {
 		return data.InternalCodemappingData{}, err
 	}
 	return internalCodemappingResponse, nil
