@@ -40,7 +40,13 @@ func (s *Server) HelloWorldHandler(c *gin.Context) {
 
 func (s *Server) AddInternalCodemappingDataHandler(c *gin.Context) {
 	var input data.InternalCodemappingData
-	c.BindJSON(&input)
+	if err := c.BindJSON(&input); err != nil {
+		c.Error(fmt.Errorf("AddInternalCodemappingDataHandler with %q - %q", input, err.Error()))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
 
 	url := "http://redis-service:8080/internalCodemappingData"
 	resp, err := helpers.MakeRedisRequest(url, "POST", jsonContentType, input)

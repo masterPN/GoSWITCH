@@ -34,7 +34,13 @@ func (s *Server) ExecuteRadiusOnestageValidateHandler(c *gin.Context) {
 		CallingNumber     string `json:"callingNumber"`
 		DestinationNumber string `json:"destinationNumber"`
 	}
-	c.BindJSON(&input)
+	if err := c.BindJSON(&input); err != nil {
+		c.Error(fmt.Errorf("ExecuteRadiusOnestageValidateHandler with %q - %q", input, err.Error()))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
 
 	result, err := s.onevoisModels.RadiusOnestageValidateData.ExecuteRadiusOnestageValidate(input.Prefix, input.CallingNumber, input.DestinationNumber)
 	if err != nil {
@@ -50,7 +56,13 @@ func (s *Server) ExecuteRadiusOnestageValidateHandler(c *gin.Context) {
 
 func (s *Server) ExecuteRadiusAccountingHandler(c *gin.Context) {
 	var input onevoisdata.RadiusAccounting
-	c.BindJSON(&input)
+	if err := c.BindJSON(&input); err != nil {
+		c.Error(fmt.Errorf("ExecuteRadiusAccountingHandler with %q - %q", input, err.Error()))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
 
 	result, err := s.onevoisModels.RadiusAccountingData.ExecuteRadiusAccounting(input)
 	if err != nil {
