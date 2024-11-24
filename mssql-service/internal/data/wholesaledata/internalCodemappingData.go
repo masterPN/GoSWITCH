@@ -50,8 +50,8 @@ func (r InternalCodemappingDataModel) Set(input InternalCodemappingData) (Intern
 		// Insert new record
 		query = `
             INSERT INTO InternalCodeMapping (InternalCode, OperatorCode)
+			OUTPUT INSERTED.ID
             VALUES ($1, $2)
-            RETURNING ID
         `
 		err = r.DB.QueryRow(query, input.InternalCode, input.OperatorCode).Scan(&id)
 		if err != nil {
@@ -64,8 +64,8 @@ func (r InternalCodemappingDataModel) Set(input InternalCodemappingData) (Intern
 		query = `
             UPDATE InternalCodeMapping
             SET InternalCode = $1, OperatorCode = $2
+			OUTPUT INSERTED.ID
             WHERE ID = $3
-            RETURNING ID
         `
 		err = r.DB.QueryRow(query, input.InternalCode, input.OperatorCode, id).Scan(&id)
 		if err != nil {
