@@ -25,17 +25,17 @@ func Execute(client *goesl.Client, msg map[string]string) {
 	switch {
 	case strings.Contains(applicationData, "initConference") && eventName == "CHANNEL_EXECUTE_COMPLETE":
 		goesl.Debug("%q\n %q", applicationData, msg)
-		go handlers.InitConferenceHandler(client, msg)
+		go handlers.HandleConferenceInitialization(client, msg)
 	case strings.Contains(answerState, "answered") &&
 		strings.Contains(callDirection, "outbound") &&
 		strings.Contains(eventFunction, "switch_channel_perform_mark_answered"):
 		// Callee accepts the call
 		goesl.Debug("callee accepted\n %q", msg)
-		go handlers.JoinConferenceHandler(msg)
+		go handlers.HandleConferenceJoin(msg)
 	case strings.Contains(answerState, "hangup") &&
 		strings.Contains(callDirection, "inbound") &&
 		strings.Contains(eventFunction, "switch_core_session_perform_destroy"):
 		goesl.Debug("end conference\n %q", msg)
-		go handlers.EndConferenceHandler(client, msg)
+		go handlers.HandleConferenceEnd(client, msg)
 	}
 }

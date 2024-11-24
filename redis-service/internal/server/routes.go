@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"redis-service/internal/data"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -14,6 +15,9 @@ func (s *Server) RegisterRoutes() http.Handler {
 	r.GET("/", s.HelloWorldHandler)
 	r.POST("/saveRadiusAccountingData", s.SaveRadiusAccountingDataHandler)
 	r.GET("/popRadiusAccountingData/:anino", s.PopRadiusAccountingDataHandler)
+	r.POST("/internalCodemappingData", s.SetInternalCodemappingDataHandler)
+	r.GET("/internalCodemappingData/:internalCode", s.GetInternalCodemappingDataHandler)
+	r.DELETE("/internalCodemappingData", s.DeleteInternalCodemappingDataHandler)
 
 	return r
 }
@@ -55,4 +59,66 @@ func (s *Server) PopRadiusAccountingDataHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, radiusAccountingData)
+}
+
+func (s *Server) SetInternalCodemappingDataHandler(c *gin.Context) {
+	var input data.InternalCodemappingData
+	c.BindJSON(&input)
+
+	err := s.models.InternalCodemappingData.Set(input)
+	if err != nil {
+		c.Error(fmt.Errorf("SetInternalCodemappingDataHandler with %q - %q", input, err.Error()))
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, map[string]interface{}{
+		"message": "Internal Codemapping Data saved successfully",
+		"data":    input,
+	})
+}
+
+func (s *Server) GetInternalCodemappingDataHandler(c *gin.Context) {
+	internalCodeString := c.Param("internalCode")
+	internalCode, err := strconv.Atoi(internalCodeString)
+	if err != nil {
+		c.Error(fmt.Errorf("GetInternalCodemappingDataHandler with %q - %q", internalCode, err.Error()))
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	internalCodemappingData, err := s.models.InternalCodemappingData.Get(internalCode)
+	if err != nil {
+		c.Error(fmt.Errorf("GetInternalCodemappingDataHandler with %q - %q", internalCode, err.Error()))
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":                   err.Error(),
+			"internalCodemappingData": internalCodemappingData,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, internalCodemappingData)
+}
+
+func (s *Server) DeleteInternalCodemappingDataHandler(c *gin.Context) {
+	var input data.InternalCodemappingData
+	c.BindJSON(&input)
+
+	err := s.models.InternalCodemappingData.Delete(input.InternalCode)
+	if err != nil {
+		c.Error(fmt.Errorf("DeleteInternalCodemappingDataHandler with %q - %q", input, err.Error()))
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, map[string]interface{}{
+		"message": "Internal Codemapping Data deleted successfully",
+		"data":    input,
+	})
 }

@@ -58,6 +58,19 @@ services:
       mode: replicated
       replicas: 1
 
+    batch-service:
+      env_file:
+        - path: ./../batch-service/.env
+      build:
+        context: ./../batch-service
+        dockerfile: ./../batch-service/batch-service.dockerfile
+      ports:
+        - 8094:8080
+      restart: unless-stopped
+      deploy:
+        mode: replicated
+        replicas: 1
+
 volumes:
   redis-data:
 
