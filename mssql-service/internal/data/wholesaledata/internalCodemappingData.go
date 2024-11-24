@@ -76,3 +76,9 @@ func (r InternalCodemappingDataModel) Set(input InternalCodemappingData) (Intern
 	input.ID = id
 	return input, nil
 }
+
+func (r InternalCodemappingDataModel) Delete(internalCode int) error {
+	query := `DELETE FROM InternalCodeMapping WHERE InternalCode = $1`
+	_, err := r.DB.Exec(query, internalCode)
+	return err
+}
