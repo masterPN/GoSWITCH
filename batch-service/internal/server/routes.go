@@ -18,6 +18,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	}))
 
 	r.GET("/", s.HelloWorldHandler)
+	r.POST("/internalCodemappingData", s.AddInternalCodemappingData)
 
 	return r
 }
@@ -27,4 +28,8 @@ func (s *Server) HelloWorldHandler(c *gin.Context) {
 	resp["message"] = "Hello World"
 
 	c.JSON(http.StatusOK, resp)
+}
+
+func (s *Server) AddInternalCodemappingData(c *gin.Context) {
+
 }
