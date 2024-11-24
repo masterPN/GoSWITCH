@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"mssql-service/internal/data/onevoisdata"
+	"mssql-service/internal/data/wholesaledata"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -17,6 +18,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	r.GET("/internalCodemapping", s.FetchAllInternalCodemappingsHandler)
 	r.POST("/radiusOnestageValidate", s.ExecuteRadiusOnestageValidateHandler)
 	r.POST("/radiusAccounting", s.ExecuteRadiusAccountingHandler)
+	r.POST("/internalCodemapping", s.SetInternalCodemappingHandler)
 
 	return r
 }
@@ -110,6 +112,28 @@ func (s *Server) FetchAllInternalCodemappingsHandler(c *gin.Context) {
 	result, err := s.wholesaleModels.InternalCodemappingData.GetAll()
 	if err != nil {
 		c.Error(fmt.Errorf("GetAllInternalCodemappingHandler - %q", err.Error()))
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
+}
+
+func (s *Server) SetInternalCodemappingHandler(c *gin.Context) {
+	var input wholesaledata.InternalCodemappingData
+	if err := c.BindJSON(&input); err != nil {
+		c.Error(fmt.Errorf("SetInternalCodemappingHandler with %q - %q", input, err.Error()))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	result, err := s.wholesaleModels.InternalCodemappingData.Set(input)
+	if err != nil {
+		c.Error(fmt.Errorf("SetInternalCodemappingHandler with %q - %q", input, err.Error()))
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
