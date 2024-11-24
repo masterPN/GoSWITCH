@@ -12,6 +12,7 @@ type Models struct {
 	InternalCodemappingData interface {
 		GetAll() ([]InternalCodemappingData, error)
 		Set(input InternalCodemappingData) (InternalCodemappingData, error)
+		Delete(internalCode int) error
 	}
 }
 
