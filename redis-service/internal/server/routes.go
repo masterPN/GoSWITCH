@@ -71,6 +71,7 @@ func (s *Server) SetInternalCodemappingDataHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
+		return
 	}
 
 	c.JSON(http.StatusOK, map[string]interface{}{
