@@ -5,6 +5,7 @@ import (
 	"mssql-service/internal/data/onevoisdata"
 	"mssql-service/internal/data/wholesaledata"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -19,6 +20,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	r.POST("/radiusOnestageValidate", s.ExecuteRadiusOnestageValidateHandler)
 	r.POST("/radiusAccounting", s.ExecuteRadiusAccountingHandler)
 	r.POST("/internalCodemapping", s.SetInternalCodemappingHandler)
+	r.DELETE("/internalCodemapping", s.DeleteInternalCodemappingHandler)
 
 	return r
 }
@@ -141,4 +143,29 @@ func (s *Server) SetInternalCodemappingHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, result)
+}
+
+func (s *Server) DeleteInternalCodemappingHandler(c *gin.Context) {
+	internalCodeString := c.Query("internalCode")
+	internalCode, err := strconv.Atoi(internalCodeString)
+	if err != nil {
+		c.Error(fmt.Errorf("DeleteInternalCodemappingHandler with id %q - %q", internalCodeString, err.Error()))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	err = s.wholesaleModels.InternalCodemappingData.Delete(internalCode)
+	if err != nil {
+		c.Error(fmt.Errorf("DeleteInternalCodemappingHandler with id %q - %q", internalCodeString, err.Error()))
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Internal codemapping deleted successfully",
+	})
 }
