@@ -39,3 +39,40 @@ func (r InternalCodemappingDataModel) GetAll() ([]InternalCodemappingData, error
 
 	return internalCodemappings, nil
 }
+
+func (r InternalCodemappingDataModel) Set(input InternalCodemappingData) (InternalCodemappingData, error) {
+	query := `
+        SELECT ID FROM InternalCodeMapping WHERE InternalCode = $1
+    `
+	var id int
+	err := r.DB.QueryRow(query, input.InternalCode).Scan(&id)
+	if err == sql.ErrNoRows {
+		// Insert new record
+		query = `
+            INSERT INTO InternalCodeMapping (InternalCode, OperatorCode)
+            VALUES ($1, $2)
+            RETURNING ID
+        `
+		err = r.DB.QueryRow(query, input.InternalCode, input.OperatorCode).Scan(&id)
+		if err != nil {
+			return InternalCodemappingData{}, err
+		}
+	} else if err != nil {
+		return InternalCodemappingData{}, err
+	} else {
+		// Update existing record
+		query = `
+            UPDATE InternalCodeMapping
+            SET InternalCode = $1, OperatorCode = $2
+            WHERE ID = $3
+            RETURNING ID
+        `
+		err = r.DB.QueryRow(query, input.InternalCode, input.OperatorCode, id).Scan(&id)
+		if err != nil {
+			return InternalCodemappingData{}, err
+		}
+	}
+
+	input.ID = id
+	return input, nil
+}
