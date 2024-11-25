@@ -39,7 +39,7 @@ func (i InternalCodemappingData) Read(p []byte) (n int, err error) {
 
 func (i InternalCodemappingData) SendInternalCodemappingDataToRedis() error {
 	url := "http://redis-service:8080/internalCodemappingData"
-	resp, err := helpers.MakeRequest(url, "POST", "application/json", i)
+	resp, err := helpers.PostRequest(url, i)
 
 	if err != nil {
 		return err

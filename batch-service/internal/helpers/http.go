@@ -3,6 +3,7 @@ package helpers
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 )
@@ -27,6 +28,22 @@ func MakeRequest(url string, method string, contentType string, data interface{}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
+	}
+
+	return resp, nil
+}
+
+func PostRequest(url string, i interface{}) (*http.Response, error) {
+	resp, err := MakeRequest(url, "POST", "application/json", i)
+
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("HTTP request failed: %s", string(bodyBytes))
 	}
 
 	return resp, nil
