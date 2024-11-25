@@ -1,8 +1,11 @@
 package data
 
 import (
+	"batch-service/internal/helpers"
 	"encoding/json"
+	"fmt"
 	"io"
+	"net/http"
 )
 
 type InternalCodemappingData struct {
@@ -32,4 +35,21 @@ func (i InternalCodemappingData) Read(p []byte) (n int, err error) {
 		return copyLen, io.ErrShortBuffer
 	}
 	return copyLen, nil
+}
+
+func (i InternalCodemappingData) SendInternalCodemappingDataToRedis() error {
+	url := "http://redis-service:8080/internalCodemappingData"
+	resp, err := helpers.MakeRequest(url, "POST", "application/json", i)
+
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("HTTP request failed: %s", string(bodyBytes))
+	}
+
+	return nil
 }

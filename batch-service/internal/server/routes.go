@@ -2,9 +2,7 @@ package server
 
 import (
 	"batch-service/internal/data"
-	"batch-service/internal/helpers"
 	"fmt"
-	"io"
 	"net/http"
 
 	"github.com/gin-contrib/cors"
@@ -48,23 +46,10 @@ func (s *Server) AddInternalCodemappingDataHandler(c *gin.Context) {
 		return
 	}
 
-	url := "http://redis-service:8080/internalCodemappingData"
-	resp, err := helpers.MakeRequest(url, "POST", jsonContentType, input)
-
-	if err != nil {
+	if err := input.SendInternalCodemappingDataToRedis(); err != nil {
 		c.Error(fmt.Errorf("AddInternalCodemappingDataHandler with %q - %q", input, err.Error()))
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
-		})
-		return
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		bodyBytes, _ := io.ReadAll(resp.Body)
-		c.Error(fmt.Errorf("AddInternalCodemappingDataHandler with %q - %q", input, string(bodyBytes)))
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": string(bodyBytes),
 		})
 		return
 	}
