@@ -53,3 +53,20 @@ func (i InternalCodemappingData) SendInternalCodemappingDataToRedis() error {
 
 	return nil
 }
+
+func (i InternalCodemappingData) SendInternalCodemappingDataToMssql() error {
+	url := "http://mssql-service:8080/internalCodemapping"
+	resp, err := helpers.PostRequest(url, i)
+
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("HTTP request failed: %s", string(bodyBytes))
+	}
+
+	return nil
+}
