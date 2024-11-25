@@ -36,29 +36,32 @@ func (s *Server) AddInternalCodemappingDataHandler(c *gin.Context) {
 	var input data.InternalCodemappingData
 	if err := c.BindJSON(&input); err != nil {
 		c.Error(fmt.Errorf("AddInternalCodemappingDataHandler with %q - %q", input, err.Error()))
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
 		return
 	}
 
-	sendToDatabases := map[string]func() error{
-		"Redis": input.SendInternalCodemappingDataToRedis,
-		"MSSQL": input.SendInternalCodemappingDataToMssql,
+	mssqlResp, mssqlErr := input.SendInternalCodemappingDataToMssql()
+	if mssqlErr != nil {
+		c.Error(fmt.Errorf("AddInternalCodemappingDataHandler with %q - %q", input, mssqlErr.Error()))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Sprintf("Failed to send data to %s: %s", "MSSQL", mssqlErr.Error()),
+		})
+		return
 	}
 
-	for dbName, sendFunc := range sendToDatabases {
-		if err := sendFunc(); err != nil {
-			c.Error(fmt.Errorf("AddInternalCodemappingDataHandler with %q - %q", input, err.Error()))
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": fmt.Sprintf("Failed to send data to %s: %s", dbName, err.Error()),
-			})
-			return
-		}
+	redisErr := mssqlResp.SendInternalCodemappingDataToRedis()
+	if redisErr != nil {
+		c.Error(fmt.Errorf("AddInternalCodemappingDataHandler with %q - %q", input, redisErr.Error()))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Sprintf("Failed to send data to %s: %s", "Redis", redisErr.Error()),
+		})
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "InternalCodemappingData added successfully",
-		"data":    input,
+		"data":    mssqlResp,
 	})
 }
