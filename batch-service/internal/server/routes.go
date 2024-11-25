@@ -9,10 +9,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-const (
-	jsonContentType = "application/json"
-)
-
 func (s *Server) RegisterRoutes() http.Handler {
 	r := gin.Default()
 
@@ -46,12 +42,19 @@ func (s *Server) AddInternalCodemappingDataHandler(c *gin.Context) {
 		return
 	}
 
-	if err := input.SendInternalCodemappingDataToRedis(); err != nil {
-		c.Error(fmt.Errorf("AddInternalCodemappingDataHandler with %q - %q", input, err.Error()))
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
-		})
-		return
+	sendToDatabases := map[string]func() error{
+		"Redis": input.SendInternalCodemappingDataToRedis,
+		"MSSQL": input.SendInternalCodemappingDataToMssql,
+	}
+
+	for dbName, sendFunc := range sendToDatabases {
+		if err := sendFunc(); err != nil {
+			c.Error(fmt.Errorf("AddInternalCodemappingDataHandler with %q - %q", input, err.Error()))
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": fmt.Sprintf("Failed to send data to %s: %s", dbName, err.Error()),
+			})
+			return
+		}
 	}
 
 	c.JSON(http.StatusOK, gin.H{
