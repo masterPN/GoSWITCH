@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func MakeRedisRequest(url string, method string, contentType string, data interface{}) (*http.Response, error) {
+func MakeRequest(url string, method string, contentType string, data interface{}) (*http.Response, error) {
 	var body io.Reader
 	if data != nil {
 		jsonData, err := json.Marshal(data)

@@ -49,7 +49,7 @@ func (s *Server) AddInternalCodemappingDataHandler(c *gin.Context) {
 	}
 
 	url := "http://redis-service:8080/internalCodemappingData"
-	resp, err := helpers.MakeRedisRequest(url, "POST", jsonContentType, input)
+	resp, err := helpers.MakeRequest(url, "POST", jsonContentType, input)
 
 	if err != nil {
 		c.Error(fmt.Errorf("AddInternalCodemappingDataHandler with %q - %q", input, err.Error()))
