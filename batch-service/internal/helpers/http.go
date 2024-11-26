@@ -34,7 +34,22 @@ func MakeRequest(url string, method string, contentType string, data interface{}
 }
 
 func PostRequest(url string, i interface{}) (*http.Response, error) {
-	resp, err := MakeRequest(url, "POST", "application/json", i)
+	resp, err := MakeRequest(url, http.MethodPost, "application/json", i)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("HTTP request failed: %s", string(bodyBytes))
+	}
+
+	return resp, nil
+}
+
+func DeleteRequest(url string, i interface{}) (*http.Response, error) {
+	resp, err := MakeRequest(url, http.MethodDelete, "application/json", i)
 
 	if err != nil {
 		return nil, err
