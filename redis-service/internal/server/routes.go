@@ -17,7 +17,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	r.GET("/popRadiusAccountingData/:anino", s.PopRadiusAccountingDataHandler)
 	r.POST("/internalCodemappingData", s.SetInternalCodemappingDataHandler)
 	r.GET("/internalCodemappingData/:internalCode", s.GetInternalCodemappingDataHandler)
-	r.DELETE("/internalCodemappingData", s.DeleteInternalCodemappingDataHandler)
+	r.DELETE("/internalCodemapping", s.DeleteInternalCodemappingDataHandler)
 
 	return r
 }
