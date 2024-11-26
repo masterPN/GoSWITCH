@@ -166,6 +166,7 @@ func (s *Server) DeleteInternalCodemappingHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Internal codemapping deleted successfully",
+		"message":      "Internal codemapping deleted successfully",
+		"internalCode": internalCode,
 	})
 }
