@@ -78,3 +78,37 @@ func (i InternalCodemappingData) SendInternalCodemappingDataToMssql() (InternalC
 
 	return result, nil
 }
+
+func (i InternalCodemappingData) DeleteInternalCodemappingDataInRedis() error {
+	url := fmt.Sprintf("http://redis-service:8080/internalCodemapping?internalCode=%d", i.InternalCode)
+	resp, err := helpers.DeleteRequest(url, i)
+
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("HTTP request failed: %s", string(bodyBytes))
+	}
+
+	return nil
+}
+
+func (i InternalCodemappingData) DeleteInternalCodemappingDataInMssql() error {
+	url := fmt.Sprintf("http://mssql-service:8080/internalCodemapping?internalCode=%d", i.InternalCode)
+	resp, err := helpers.DeleteRequest(url, i)
+
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("HTTP request failed: %s", string(bodyBytes))
+	}
+
+	return nil
+}
