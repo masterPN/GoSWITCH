@@ -5,7 +5,7 @@ import (
 	"io"
 )
 
-type RadiusAccountingInput struct {
+type RadiusAccounting struct {
 	ConfID       int    `json:"confID"`
 	AccessNo     string `json:"accessNo"`
 	Anino        string `json:"anino"`
@@ -26,7 +26,7 @@ type RadiusAccountingInput struct {
 }
 
 // Read implements io.Reader.
-func (r RadiusAccountingInput) Read(p []byte) (n int, err error) {
+func (r RadiusAccounting) Read(p []byte) (n int, err error) {
 	// Serialize the struct to JSON.
 	data, err := json.Marshal(r)
 	if err != nil {

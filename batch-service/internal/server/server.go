@@ -2,10 +2,6 @@ package server
 
 import (
 	"fmt"
-	"mssql-service/internal/data/onevoisdata"
-	"mssql-service/internal/data/wholesaledata"
-	"mssql-service/internal/database/onevoisdatabase"
-	"mssql-service/internal/database/wholesaledatabase"
 	"net/http"
 	"os"
 	"strconv"
@@ -15,17 +11,13 @@ import (
 )
 
 type Server struct {
-	port            int
-	onevoisModels   onevoisdata.Models
-	wholesaleModels wholesaledata.Models
+	port int
 }
 
 func NewServer() *http.Server {
 	port, _ := strconv.Atoi(os.Getenv("PORT"))
 	NewServer := &Server{
-		port:            port,
-		onevoisModels:   onevoisdata.NewModels(onevoisdatabase.New().GetDbInstance()),
-		wholesaleModels: wholesaledata.NewModels(wholesaledatabase.New().GetDbInstance()),
+		port: port,
 	}
 
 	// Declare Server config

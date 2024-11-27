@@ -4,10 +4,10 @@ RUN adduser -D -g '' appuser
 
 WORKDIR /app
 
-COPY eslApp /app
+COPY batchApp /app
 
 RUN chown -R appuser:appuser /app
 
 USER appuser
 
-CMD [ "/app/eslApp" ]
+CMD [ "/app/batchApp" ]

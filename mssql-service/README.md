@@ -65,11 +65,16 @@ launch.json
             "program": "cmd/api/main.go",
             "env": {
                 "PORT" : "8080",
-                "DB_HOST" : "",
-                "DB_PORT" : "1433",
-                "DB_DATABASE" : "",
-                "DB_USERNAME" : "",
-                "DB_PASSWORD" : "",
+                "ONEVOIS_DB_HOST" : "",
+                "ONEVOIS_DB_PORT" : "1433",
+                "ONEVOIS_DB_DATABASE" : "",
+                "ONEVOIS_DB_USERNAME" : "",
+                "ONEVOIS_DB_PASSWORD" : "",
+                "WHOLESALE_DB_HOST" : "",
+                "WHOLESALE_DB_PORT" : "1433",
+                "WHOLESALE_DB_DATABASE" : "",
+                "WHOLESALE_DB_USERNAME" : "",
+                "WHOLESALE_DB_PASSWORD" : "",
             }
         }
     ]
@@ -82,9 +87,15 @@ launch.json
 PORT=8080
 APP_ENV=local
 
-DB_HOST=
-DB_PORT=1433
-DB_DATABASE=
-DB_USERNAME=
-DB_PASSWORD=
+ONEVOIS_DB_HOST=
+ONEVOIS_DB_PORT=1433
+ONEVOIS_DB_DATABASE=
+ONEVOIS_DB_USERNAME=
+ONEVOIS_DB_PASSWORD=
+
+WHOLESALE_DB_HOST=
+WHOLESALE_DB_PORT=1433
+WHOLESALE_DB_DATABASE=
+WHOLESALE_DB_USERNAME=
+WHOLESALE_DB_PASSWORD=
 ```

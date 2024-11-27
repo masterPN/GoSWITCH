@@ -1,6 +1,6 @@
 package data
 
-type RadiusData struct {
+type RadiusOnestageValidateData struct {
 	Lcode        string `json:"LCODE"`
 	Status       int    `json:"STATUS"`
 	RouteType    string `json:"ROUTE_TYPE"`
