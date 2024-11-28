@@ -57,7 +57,8 @@ jobs:
           projectName: Project
           additionalParameters: |
             sonar.sources=./project
-            sonar.go.coverage.reportPaths=coverage.out
+            sonar.go.coverage.reportPaths=**/coverage.out
+            sonar.exclusions=**/*_test.go
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
@@ -79,7 +80,8 @@ jobs:
           projectName: Batch Service
           additionalParameters: |
             sonar.sources=./batch-service
-            sonar.go.coverage.reportPaths=coverage.out
+            sonar.go.coverage.reportPaths=**/coverage.out
+            sonar.exclusions=**/*_test.go
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
@@ -101,7 +103,8 @@ jobs:
           projectName: ESL Service
           additionalParameters: |
             sonar.sources=./esl-service
-            sonar.go.coverage.reportPaths=coverage.out
+            sonar.go.coverage.reportPaths=**/coverage.out
+            sonar.exclusions=**/*_test.go
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
@@ -123,7 +126,8 @@ jobs:
           projectName: MSSQL Service
           additionalParameters: |
             sonar.sources=./mssql-service
-            sonar.go.coverage.reportPaths=coverage.out
+            sonar.go.coverage.reportPaths=**/coverage.out
+            sonar.exclusions=**/*_test.go
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
@@ -145,6 +149,7 @@ jobs:
           projectName: Redis Service
           additionalParameters: |
             sonar.sources=./redis-service
-            sonar.go.coverage.reportPaths=coverage.out
+            sonar.go.coverage.reportPaths=**/coverage.out
+            sonar.exclusions=**/*_test.go
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
