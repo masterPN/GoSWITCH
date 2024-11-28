@@ -44,27 +44,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: '1.23.3'  # Use your desired Go version
-
-      - name: Install dependencies for Project
-        run: |
-          cd project
-          go mod tidy
+        uses: actions/checkout@v4
 
       - name: Run SonarCloud analysis for Project
-        uses: SonarSource/sonarcloud-github-action@v1
+        uses: SonarSource/sonarcloud-github-action@master
         with:
           organization: ${{ secrets.SONAR_ORG_KEY }}
           projectKey: ${{ secrets.SONAR_PROJECT_PROJECT_KEY }}
           projectName: Project
           additionalParameters: |
-            sonar.sources=.
-            sonar.language=go
+            sonar.sources=./project
             sonar.go.coverage.reportPaths=coverage.out
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -74,27 +63,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: '1.23.3'
-
-      - name: Install dependencies for Batch Service
-        run: |
-          cd batch-service
-          go mod tidy
+        uses: actions/checkout@v4
 
       - name: Run SonarCloud analysis for Batch Service
-        uses: SonarSource/sonarcloud-github-action@v1
+        uses: SonarSource/sonarcloud-github-action@master
         with:
           organization: ${{ secrets.SONAR_ORG_KEY }}
           projectKey: ${{ secrets.SONAR_BATCH_PROJECT_KEY }}
           projectName: Batch Service
           additionalParameters: |
-            sonar.sources=.
-            sonar.language=go
+            sonar.sources=./batch-service
             sonar.go.coverage.reportPaths=coverage.out
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -104,27 +82,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: '1.23.3'
-
-      - name: Install dependencies for ESL Service
-        run: |
-          cd esl-service
-          go mod tidy
+        uses: actions/checkout@v4
 
       - name: Run SonarCloud analysis for ESL Service
-        uses: SonarSource/sonarcloud-github-action@v1
+        uses: SonarSource/sonarcloud-github-action@master
         with:
           organization: ${{ secrets.SONAR_ORG_KEY }}
           projectKey: ${{ secrets.SONAR_ESLSERVICE_PROJECT_KEY }}
           projectName: ESL Service
           additionalParameters: |
-            sonar.sources=.
-            sonar.language=go
+            sonar.sources=./esl-service
             sonar.go.coverage.reportPaths=coverage.out
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -134,27 +101,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: '1.23.3'
-
-      - name: Install dependencies for MSSQL Service
-        run: |
-          cd mssql-service
-          go mod tidy
+        uses: actions/checkout@v4
 
       - name: Run SonarCloud analysis for MSSQL Service
-        uses: SonarSource/sonarcloud-github-action@v1
+        uses: SonarSource/sonarcloud-github-action@master
         with:
           organization: ${{ secrets.SONAR_ORG_KEY }}
           projectKey: ${{ secrets.SONAR_MSSQL_PROJECT_KEY }}
           projectName: MSSQL Service
           additionalParameters: |
-            sonar.sources=.
-            sonar.language=go
+            sonar.sources=./mssql-service
             sonar.go.coverage.reportPaths=coverage.out
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -164,27 +120,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: '1.23.3'
-
-      - name: Install dependencies for Redis Service
-        run: |
-          cd redis-service
-          go mod tidy
+        uses: actions/checkout@v4
 
       - name: Run SonarCloud analysis for Redis Service
-        uses: SonarSource/sonarcloud-github-action@v1
+        uses: SonarSource/sonarcloud-github-action@master
         with:
           organization: ${{ secrets.SONAR_ORG_KEY }}
           projectKey: ${{ secrets.SONAR_REDIS_PROJECT_KEY }}
           projectName: Redis Service
           additionalParameters: |
-            sonar.sources=.
-            sonar.language=go
+            sonar.sources=./redis-service
             sonar.go.coverage.reportPaths=coverage.out
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
