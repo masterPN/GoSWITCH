@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"reflect"
 	"strconv"
 	"time"
 
@@ -57,56 +58,23 @@ func (r RadiusAccountingDataModel) Set(input RadiusAccountingData) error {
 
 // populateData fills the provided map with non-empty fields from the input.
 func (r RadiusAccountingDataModel) populateData(data map[string]interface{}, input RadiusAccountingData) {
-	if input.ConfID != 0 {
-		data["confID"] = input.ConfID
-	}
-	if input.AccessNo != "" {
-		data["accessNo"] = input.AccessNo
-	}
-	if input.Anino != "" {
-		data["anino"] = input.Anino
-	}
-	if input.DestNo != "" {
-		data["destNo"] = input.DestNo
-	}
-	if input.SubscriberNo != "" {
-		data["subscriberNo"] = input.SubscriberNo
-	}
-	if input.Pwd != "" {
-		data["pwd"] = input.Pwd
-	}
-	if input.SessionID != "" {
-		data["sessionID"] = input.SessionID
-	}
-	if input.CategoryID != "" {
-		data["categoryID"] = input.CategoryID
-	}
-	if input.StartTime != "" {
-		data["startTime"] = input.StartTime
-	}
-	if input.TalkingTime != "" {
-		data["talkingTime"] = input.TalkingTime
-	}
-	if input.CallDuration != 0 {
-		data["callDuration"] = input.CallDuration
-	}
-	if input.ReleaseCode != "" {
-		data["releaseCode"] = input.ReleaseCode
-	}
-	if input.InTrunkID != 0 {
-		data["inTrunkID"] = input.InTrunkID
-	}
-	if input.OutTrunkID != 0 {
-		data["outTrunkID"] = input.OutTrunkID
-	}
-	if input.ReasonID != 0 {
-		data["reasonID"] = input.ReasonID
-	}
-	if input.Prefix != "" {
-		data["prefix"] = input.Prefix
-	}
-	if input.LanguageCode != "" {
-		data["languageCode"] = input.LanguageCode
+	value := reflect.ValueOf(input)
+	typeOf := value.Type()
+
+	for i := 0; i < value.NumField(); i++ {
+		field := value.Field(i)
+		fieldName := typeOf.Field(i).Name
+
+		switch field.Kind() {
+		case reflect.Int:
+			if field.Int() != 0 {
+				data[fieldName] = field.Int()
+			}
+		case reflect.String:
+			if field.String() != "" {
+				data[fieldName] = field.String()
+			}
+		}
 	}
 }
 
