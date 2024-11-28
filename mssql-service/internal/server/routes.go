@@ -10,17 +10,26 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const (
+	routeHelloWorld             = "/"
+	routeOperatorRouting        = "/operatorRouting"
+	routeOptimalRoute           = "/optimalRoute"
+	routeRadiusOnestageValidate = "/radiusOnestageValidate"
+	routeRadiusAccounting       = "/radiusAccounting"
+	routeInternalCodemapping    = "/internalCodemapping"
+)
+
 func (s *Server) RegisterRoutes() http.Handler {
 	r := gin.Default()
 
-	r.GET("/", s.HelloWorldHandler)
-	r.GET("/operatorRouting", s.GetOperatorRoutingHandler)
-	r.GET("/optimalRoute", s.ExecuteGetOptimalRouteHandler)
-	r.GET("/internalCodemapping", s.FetchAllInternalCodemappingsHandler)
-	r.POST("/radiusOnestageValidate", s.ExecuteRadiusOnestageValidateHandler)
-	r.POST("/radiusAccounting", s.ExecuteRadiusAccountingHandler)
-	r.POST("/internalCodemapping", s.SetInternalCodemappingHandler)
-	r.DELETE("/internalCodemapping", s.DeleteInternalCodemappingHandler)
+	r.GET(routeHelloWorld, s.HelloWorldHandler)
+	r.GET(routeOperatorRouting, s.GetOperatorRoutingHandler)
+	r.GET(routeOptimalRoute, s.ExecuteGetOptimalRouteHandler)
+	r.POST(routeRadiusOnestageValidate, s.ExecuteRadiusOnestageValidateHandler)
+	r.POST(routeRadiusAccounting, s.ExecuteRadiusAccountingHandler)
+	r.GET(routeInternalCodemapping, s.FetchAllInternalCodemappingsHandler)
+	r.POST(routeInternalCodemapping, s.SetInternalCodemappingHandler)
+	r.DELETE(routeInternalCodemapping, s.DeleteInternalCodemappingHandler)
 
 	return r
 }
