@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/0x19/goesl"
+	sharedData "github.com/masterPN/GoSWITCH-shared/data"
 )
 
 // Configuration loading function
@@ -83,7 +84,7 @@ func validateRadiusAndHandleConference(client *goesl.Client, conferenceInitData 
 	}
 	defer radiusValidationResponse.Body.Close()
 
-	var radiusValidationResponseData data.RadiusOnestageValidateData
+	var radiusValidationResponseData sharedData.RadiusOnestageValidateData
 	if err := json.NewDecoder(radiusValidationResponse.Body).Decode(&radiusValidationResponseData); err != nil {
 		log.Printf("Error decoding radius response: %s\n", err)
 		return true
