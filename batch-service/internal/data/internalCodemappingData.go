@@ -8,6 +8,8 @@ import (
 	"net/http"
 )
 
+const httpReqFailedMsg = "HTTP request failed: %s"
+
 type InternalCodemappingData struct {
 	ID           int `json:"ID"`
 	InternalCode int `json:"InternalCode"`
@@ -48,7 +50,7 @@ func (i InternalCodemappingData) SendInternalCodemappingDataToRedis() error {
 
 	if resp.StatusCode != http.StatusOK {
 		bodyBytes, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("HTTP request failed: %s", string(bodyBytes))
+		return fmt.Errorf(httpReqFailedMsg, string(bodyBytes))
 	}
 
 	return nil
@@ -68,7 +70,7 @@ func (i InternalCodemappingData) SendInternalCodemappingDataToMssql() (InternalC
 		if err != nil {
 			return InternalCodemappingData{}, fmt.Errorf("HTTP request failed: %w", err)
 		}
-		return InternalCodemappingData{}, fmt.Errorf("HTTP request failed: %s", string(bodyBytes))
+		return InternalCodemappingData{}, fmt.Errorf(httpReqFailedMsg, string(bodyBytes))
 	}
 
 	var result InternalCodemappingData
@@ -90,7 +92,7 @@ func (i InternalCodemappingData) DeleteInternalCodemappingDataInRedis() error {
 
 	if resp.StatusCode != http.StatusOK {
 		bodyBytes, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("HTTP request failed: %s", string(bodyBytes))
+		return fmt.Errorf(httpReqFailedMsg, string(bodyBytes))
 	}
 
 	return nil
@@ -107,7 +109,7 @@ func (i InternalCodemappingData) DeleteInternalCodemappingDataInMssql() error {
 
 	if resp.StatusCode != http.StatusOK {
 		bodyBytes, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("HTTP request failed: %s", string(bodyBytes))
+		return fmt.Errorf(httpReqFailedMsg, string(bodyBytes))
 	}
 
 	return nil
