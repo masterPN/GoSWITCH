@@ -49,9 +49,8 @@ jobs:
       - name: Run SonarCloud analysis for Project
         uses: SonarSource/sonarcloud-github-action@master
         with:
-          args:
-            -Dsonar.organization=${{ secrets.SONAR_ORG_KEY }}
-            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_PROJECT_KEY }}
+          organization: ${{ secrets.SONAR_ORG_KEY }}
+          projectKey: ${{ secrets.SONAR_PROJECT_PROJECT_KEY }}
           projectName: Project
           additionalParameters: |
             sonar.sources=./project
@@ -70,9 +69,8 @@ jobs:
       - name: Run SonarCloud analysis for Batch Service
         uses: SonarSource/sonarcloud-github-action@master
         with:
-          args:
-            -Dsonar.organization=${{ secrets.SONAR_ORG_KEY }}
-            -Dsonar.projectKey=${{ secrets.SONAR_BATCH_PROJECT_KEY }}
+          organization: ${{ secrets.SONAR_ORG_KEY }}
+          projectKey: ${{ secrets.SONAR_BATCH_PROJECT_KEY }}
           projectName: Batch Service
           additionalParameters: |
             sonar.sources=./batch-service
@@ -91,9 +89,8 @@ jobs:
       - name: Run SonarCloud analysis for ESL Service
         uses: SonarSource/sonarcloud-github-action@master
         with:
-          args:
-            -Dsonar.organization=${{ secrets.SONAR_ORG_KEY }}
-            -Dsonar.projectKey=${{ secrets.SONAR_ESLSERVICE_PROJECT_KEY }}
+          organization: ${{ secrets.SONAR_ORG_KEY }}
+          projectKey: ${{ secrets.SONAR_ESLSERVICE_PROJECT_KEY }}
           projectName: ESL Service
           additionalParameters: |
             sonar.sources=./esl-service
@@ -112,9 +109,8 @@ jobs:
       - name: Run SonarCloud analysis for MSSQL Service
         uses: SonarSource/sonarcloud-github-action@master
         with:
-          args:
-            -Dsonar.organization=${{ secrets.SONAR_ORG_KEY }}
-            -Dsonar.projectKey=${{ secrets.SONAR_MSSQL_PROJECT_KEY }}
+          organization: ${{ secrets.SONAR_ORG_KEY }}
+          projectKey: ${{ secrets.SONAR_MSSQL_PROJECT_KEY }}
           projectName: MSSQL Service
           additionalParameters: |
             sonar.sources=./mssql-service
@@ -133,9 +129,8 @@ jobs:
       - name: Run SonarCloud analysis for Redis Service
         uses: SonarSource/sonarcloud-github-action@master
         with:
-          args:
-            -Dsonar.organization=${{ secrets.SONAR_ORG_KEY }}
-            -Dsonar.projectKey=${{ secrets.SONAR_REDIS_PROJECT_KEY }}
+          organization: ${{ secrets.SONAR_ORG_KEY }}
+          projectKey: ${{ secrets.SONAR_REDIS_PROJECT_KEY }}
           projectName: Redis Service
           additionalParameters: |
             sonar.sources=./redis-service
