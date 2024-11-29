@@ -61,6 +61,10 @@ jobs:
             # mandatory
             -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
             -Dsonar.organization=${{ secrets.SONAR_ORG_KEY }}
+            -Dsonar.exclusions=**/*_test.go
+            -Dsonar.test.inclusions="**/*_test.go"
+            -Dsonar.issue.ignore.multicriteria.g1.ruleKey=go:S1192
+            -Dsonar.issue.ignore.multicriteria.g1.resourceKey=**/*_test.go
             # Comma-separated paths to directories containing main source files.
             #-Dsonar.sources= # optional, default is project base directory
             # Comma-separated paths to directories containing test source files.
