@@ -48,7 +48,7 @@ func (r RadiusAccountingDataModel) Set(input RadiusAccountingData) error {
 	if len(data) > 0 {
 		err := r.DB.HSet(ctx, input.SessionID, data).Err()
 		if err != nil {
-			log.Fatalf("Could not set hash: %v", err)
+			log.Printf("Could not set hash: %v", err)
 			return err
 		}
 	}
@@ -85,7 +85,7 @@ func (r RadiusAccountingDataModel) Pop(sessionID string) (RadiusAccountingData, 
 	// Retrieve all fields and values from the hash
 	radiusAccountingDataMap, err := r.DB.HGetAll(ctx, sessionID).Result()
 	if err != nil {
-		log.Fatalf("could not HGetAll from hash %s: %v", sessionID, err)
+		log.Printf("could not HGetAll from hash %s: %v", sessionID, err)
 		return RadiusAccountingData{}, err
 	}
 
@@ -120,7 +120,7 @@ func (r RadiusAccountingDataModel) Pop(sessionID string) (RadiusAccountingData, 
 	result, err := r.DB.Del(ctx, sessionID).Result()
 
 	if err != nil {
-		log.Fatalf("could not delete key %s: %v", sessionID, err)
+		log.Printf("could not delete key %s: %v", sessionID, err)
 		return radiusAccountingData, err
 	}
 
