@@ -35,7 +35,7 @@ func (r InternalCodemappingDataModel) Set(input InternalCodemappingData) error {
 	if len(data) > 0 {
 		err := r.DB.HSet(ctx, internalCodemappingKeyPrefix+strconv.Itoa(input.InternalCode), data).Err()
 		if err != nil {
-			log.Fatalf("Could not set hash: %v", err)
+			log.Printf("Error setting hash: %v", err)
 			return err
 		}
 	}
