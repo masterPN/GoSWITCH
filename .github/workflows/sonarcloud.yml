@@ -61,7 +61,6 @@ jobs:
             # mandatory
             -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
             -Dsonar.organization=${{ secrets.SONAR_ORG_KEY }}
-            -Dsonar.exclusions=**/*_test.go
             -Dsonar.test.inclusions="**/*_test.go"
             -Dsonar.issue.ignore.multicriteria.g1.ruleKey=go:S1192
             -Dsonar.issue.ignore.multicriteria.g1.resourceKey=**/*_test.go
