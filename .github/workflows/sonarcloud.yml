@@ -39,16 +39,49 @@ permissions:
   pull-requests: read # allows SonarCloud to decorate PRs with analysis results
 
 jobs:
-  Analysis:
+  Setup-Golang:
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v4
+      - name: Setup golang
+        uses: actions/setup-go@v4
+        with:
+          go-version: '^1.23.3'
+
+  Checkout-Repository:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
 
-      - name: Analyze with SonarCloud
+  Get-Dependencies:
+    needs: [Setup-Golang, Checkout-Repository]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [batch-service, esl-service, mssql-service, redis-service]
+    steps:
+      - name: Get dependencies for ${{ matrix.service }}
+        run: |
+          cd ./${{ matrix.service }} && go mod tidy
 
+  Run-Test:
+    needs: Get-Dependencies
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [batch-service, esl-service, mssql-service, redis-service]
+    steps:
+      - name: Run tests for ${{ matrix.service }}
+        run: |
+          cd ./${{ matrix.service }} && go test "./..." -coverprofile="coverage.out" -covermode=count -json > report.json
+  
+  SonarCloud-Scan:
+    needs: Run-Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Analyze with SonarCloud
         # You can pin the exact commit or the version.
         # uses: SonarSource/sonarcloud-github-action@v2.2.0
         uses: SonarSource/sonarcloud-github-action@4006f663ecaf1f8093e8e4abb9227f6041f52216
