@@ -1,12 +1,13 @@
 module redis-service
 
-go 1.23.0
+go 1.23.3
 
 require (
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-redis/redismock/v8 v8.11.5
 	github.com/joho/godotenv v1.5.1
+	github.com/masterPN/GoSWITCH-shared v0.0.0-20241130072715-cfc04e00dd60
 )
 
 require (
