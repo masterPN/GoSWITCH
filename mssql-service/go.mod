@@ -1,11 +1,12 @@
 module mssql-service
 
-go 1.22.5
+go 1.23.3
 
 require (
 	github.com/denisenkom/go-mssqldb v0.12.3
 	github.com/gin-gonic/gin v1.10.0
 	github.com/joho/godotenv v1.5.1
+	github.com/masterPN/GoSWITCH-shared v0.0.0-20241128181226-b0c16645cdfc
 )
 
 require (
