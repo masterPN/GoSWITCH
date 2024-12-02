@@ -7,7 +7,7 @@ require (
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-redis/redismock/v8 v8.11.5
 	github.com/joho/godotenv v1.5.1
-	github.com/masterPN/GoSWITCH-shared v0.0.0-20241130072715-cfc04e00dd60
+	github.com/masterPN/GoSWITCH-shared v0.0.0-20241202150722-dcd749a3efe5
 	github.com/stretchr/testify v1.9.0
 )
 

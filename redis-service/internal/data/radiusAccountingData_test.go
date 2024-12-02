@@ -24,7 +24,7 @@ func TestSetFunctionHandlesNilInputGracefully(t *testing.T) {
 
 	// Assert that the error is nil
 	if err != nil {
-		t.Errorf(sharedConstants.ExpectedErrorPhrase, err)
+		t.Errorf(sharedConstants.ExpectNoErrorPhrase, err)
 	}
 }
 
@@ -63,7 +63,7 @@ func TestSetFunctionWithNonEmptyFields(t *testing.T) {
 
 	// Assert that the error is nil
 	if err != nil {
-		t.Errorf(sharedConstants.ExpectedErrorPhrase, err)
+		t.Errorf(sharedConstants.ExpectNoErrorPhrase, err)
 	}
 }
 
@@ -284,7 +284,7 @@ func TestPopFunctionReturnsCorrectRadiusAccountingData(t *testing.T) {
 
 	// Assert that the error is nil
 	if err != nil {
-		t.Errorf(sharedConstants.ExpectedErrorPhrase, err)
+		t.Errorf(sharedConstants.ExpectNoErrorPhrase, err)
 	}
 
 	// Assert that the returned RadiusAccountingData has the correct values
