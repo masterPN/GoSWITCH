@@ -2,18 +2,24 @@ package wholesaledata
 
 import "database/sql"
 
+type ImgCdrOperatorRoutingDataInterface interface {
+	GetFirstImgCdrOperatorRoutingByNumber(number string) (ImgCdrOperatorRoutingData, error)
+}
+
+type OptimalRouteDataInterface interface {
+	ExecuteGetOptimalRoute(pCallString string) (OptimalRouteData, error)
+}
+
+type InternalCodemappingDataInterface interface {
+	GetAll() ([]InternalCodemappingData, error)
+	Set(input InternalCodemappingData) (InternalCodemappingData, error)
+	Delete(internalCode int) error
+}
+
 type Models struct {
-	ImgCdrOperatorRoutingData interface {
-		GetFirstImgCdrOperatorRoutingByNumber(number string) (ImgCdrOperatorRoutingData, error)
-	}
-	OptimalRouteData interface {
-		ExecuteGetOptimalRoute(pCallString string) (OptimalRouteData, error)
-	}
-	InternalCodemappingData interface {
-		GetAll() ([]InternalCodemappingData, error)
-		Set(input InternalCodemappingData) (InternalCodemappingData, error)
-		Delete(internalCode int) error
-	}
+	ImgCdrOperatorRoutingData ImgCdrOperatorRoutingDataInterface
+	OptimalRouteData          OptimalRouteDataInterface
+	InternalCodemappingData   InternalCodemappingDataInterface
 }
 
 func NewModels(db *sql.DB) Models {
