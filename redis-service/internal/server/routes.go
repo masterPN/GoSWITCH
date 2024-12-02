@@ -31,7 +31,7 @@ func (s *Server) HelloWorldHandler(c *gin.Context) {
 
 func (s *Server) SaveRadiusAccountingDataHandler(c *gin.Context) {
 	var input data.RadiusAccountingData
-	if err := c.BindJSON(&input); err != nil {
+	if err := c.ShouldBindJSON(&input); err != nil {
 		c.Error(fmt.Errorf("SaveRadiusAccountingDataHandler with %q - %q", input, err.Error()))
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
@@ -69,7 +69,7 @@ func (s *Server) PopRadiusAccountingDataHandler(c *gin.Context) {
 
 func (s *Server) SetInternalCodemappingDataHandler(c *gin.Context) {
 	var input data.InternalCodemappingData
-	if err := c.BindJSON(&input); err != nil {
+	if err := c.ShouldBindJSON(&input); err != nil {
 		c.Error(fmt.Errorf("SetInternalCodemappingDataHandler with %q - %q", input, err.Error()))
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
@@ -118,7 +118,7 @@ func (s *Server) GetInternalCodemappingDataHandler(c *gin.Context) {
 
 func (s *Server) DeleteInternalCodemappingDataHandler(c *gin.Context) {
 	var input data.InternalCodemappingData
-	if err := c.BindJSON(&input); err != nil {
+	if err := c.ShouldBindJSON(&input); err != nil {
 		c.Error(fmt.Errorf("DeleteInternalCodemappingDataHandler with %q - %q", input, err.Error()))
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
