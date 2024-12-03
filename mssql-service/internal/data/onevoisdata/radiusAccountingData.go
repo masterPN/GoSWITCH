@@ -38,23 +38,23 @@ type RadiusAccountingDataModel struct {
 
 func (r RadiusAccountingDataModel) ExecuteRadiusAccounting(input RadiusAccounting) (RadiusAccountingData, error) {
 	query := `EXEC RADIUS_ACCOUNTING
-				@CONF_ID = $1,
-				@ACCESS_NO = $2,
-				@ANINO = $3,
-				@DEST_NO = $4,
-				@SUBSCRIBER_NO = $5,
-				@PWD = $6,
-				@SESSION_ID = $7,
-				@CATEGORY_ID = $8,
-				@START_TIME = $9,
-				@TALKING_TIME = $10,
-				@CALL_DURATION = $11,
-				@RELEASE_CODE = $12,
-				@IN_TRUNK_ID = $13,
-				@OUT_TRUNK_ID = $14,
-				@REASON_ID = $15,
-				@PREFIX = $16,
-				@LANGUAGE_CODE = $17;`
+                @CONF_ID = ?,
+                @ACCESS_NO = ?,
+                @ANINO = ?,
+                @DEST_NO = ?,
+                @SUBSCRIBER_NO = ?,
+                @PWD = ?,
+                @SESSION_ID = ?,
+                @CATEGORY_ID = ?,
+                @START_TIME = ?,
+                @TALKING_TIME = ?,
+                @CALL_DURATION = ?,
+                @RELEASE_CODE = ?,
+                @IN_TRUNK_ID = ?,
+                @OUT_TRUNK_ID = ?,
+                @REASON_ID = ?,
+                @PREFIX = ?,
+                @LANGUAGE_CODE = ?;`
 
 	args := []interface{}{
 		input.ConfID,
