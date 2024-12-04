@@ -13,10 +13,10 @@ type RadiusOnestageValidateDataModel struct {
 }
 
 func (r RadiusOnestageValidateDataModel) ExecuteRadiusOnestageValidate(prefix string, callingNumber string, destinationNumber string) (sharedData.RadiusOnestageValidateData, error) {
-	query := `EXEC RADIUS_ONESTAGE_VALIDATE @SESSION_ID = $1,
-											@ACCESS_NO 	= $2,
-											@ANINO 		= $3,
-											@DIDNO 		= $4;`
+	query := `EXEC RADIUS_ONESTAGE_VALIDATE @SESSION_ID = ?,
+											@ACCESS_NO 	= ?,
+											@ANINO 		= ?,
+											@DIDNO 		= ?;`
 
 	args := []interface{}{
 		prefix + destinationNumber,
