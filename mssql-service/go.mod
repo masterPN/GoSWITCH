@@ -8,7 +8,7 @@ require (
 	github.com/gin-gonic/gin v1.10.0
 	github.com/golang/mock v1.6.0
 	github.com/joho/godotenv v1.5.1
-	github.com/masterPN/GoSWITCH-shared v0.0.0-20241128181226-b0c16645cdfc
+	github.com/masterPN/GoSWITCH-shared v0.0.0-20241202150722-dcd749a3efe5
 	github.com/stretchr/testify v1.10.0
 )
 
