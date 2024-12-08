@@ -1,16 +1,14 @@
-package tests
+package server
 
 import (
+	"github.com/gin-gonic/gin"
 	"net/http"
 	"net/http/httptest"
-	"redis-service/internal/server"
 	"testing"
-
-	"github.com/gin-gonic/gin"
 )
 
 func TestHelloWorldHandler(t *testing.T) {
-	s := &server.Server{}
+	s := &Server{}
 	r := gin.New()
 	r.GET("/", s.HelloWorldHandler)
 	// Create a test HTTP request
