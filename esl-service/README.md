@@ -47,3 +47,10 @@ clean up binary from the last build
 ```bash
 make clean
 ```
+
+## ENV File
+.env at root folder
+```properties
+SIP_PORT=5060
+EXTERNAL_DOMAIN=0.0.0.0
+```

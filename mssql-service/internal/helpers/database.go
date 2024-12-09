@@ -1,11 +1,10 @@
-package database
+package helpers
 
 import (
 	"context"
 	"database/sql"
 	"fmt"
 	"log"
-	"os"
 	"strconv"
 	"time"
 
@@ -26,20 +25,12 @@ type Service interface {
 	Close() error
 }
 
-type service struct {
-	db *sql.DB
+type ServiceModel struct {
+	db     *sql.DB
+	dbname string
 }
 
-var (
-	dbname     = os.Getenv("DB_DATABASE")
-	password   = os.Getenv("DB_PASSWORD")
-	username   = os.Getenv("DB_USERNAME")
-	port       = os.Getenv("DB_PORT")
-	host       = os.Getenv("DB_HOST")
-	dbInstance *service
-)
-
-func New() Service {
+func New(dbname string, password string, username string, port string, host string, dbInstance *ServiceModel) Service {
 	// Reuse Connection
 	if dbInstance != nil {
 		return dbInstance
@@ -56,19 +47,20 @@ func New() Service {
 	db.SetMaxIdleConns(50)
 	db.SetMaxOpenConns(50)
 
-	dbInstance = &service{
-		db: db,
+	dbInstance = &ServiceModel{
+		db:     db,
+		dbname: dbname,
 	}
 	return dbInstance
 }
 
-func (s *service) GetDbInstance() *sql.DB {
+func (s *ServiceModel) GetDbInstance() *sql.DB {
 	return s.db
 }
 
 // Health checks the health of the database connection by pinging the database.
 // It returns a map with keys indicating various health statistics.
-func (s *service) Health() map[string]string {
+func (s *ServiceModel) Health() map[string]string {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
@@ -79,7 +71,7 @@ func (s *service) Health() map[string]string {
 	if err != nil {
 		stats["status"] = "down"
 		stats["error"] = fmt.Sprintf("db down: %v", err)
-		log.Fatalf(fmt.Sprintf("db down: %v", err)) // Log the error and terminate the program
+		log.Fatalf("db down: %v", err) // Log the error and terminate the program
 		return stats
 	}
 
@@ -120,7 +112,7 @@ func (s *service) Health() map[string]string {
 // It logs a message indicating the disconnection from the specific database.
 // If the connection is successfully closed, it returns nil.
 // If an error occurs while closing the connection, it returns the error.
-func (s *service) Close() error {
-	log.Printf("Disconnected from database: %s", dbname)
+func (s *ServiceModel) Close() error {
+	log.Printf("Disconnected from database: %s", s.dbname)
 	return s.db.Close()
 }
