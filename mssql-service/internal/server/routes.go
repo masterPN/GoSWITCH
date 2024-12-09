@@ -47,7 +47,7 @@ func (s *Server) ExecuteRadiusOnestageValidateHandler(c *gin.Context) {
 		CallingNumber     string `json:"callingNumber"`
 		DestinationNumber string `json:"destinationNumber"`
 	}
-	if err := c.BindJSON(&input); err != nil {
+	if err := c.ShouldBindJSON(&input); err != nil {
 		c.Error(fmt.Errorf("ExecuteRadiusOnestageValidateHandler with %q - %q", input, err.Error()))
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
@@ -69,7 +69,7 @@ func (s *Server) ExecuteRadiusOnestageValidateHandler(c *gin.Context) {
 
 func (s *Server) ExecuteRadiusAccountingHandler(c *gin.Context) {
 	var input onevoisdata.RadiusAccounting
-	if err := c.BindJSON(&input); err != nil {
+	if err := c.ShouldBindJSON(&input); err != nil {
 		c.Error(fmt.Errorf("ExecuteRadiusAccountingHandler with %q - %q", input, err.Error()))
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
@@ -134,7 +134,7 @@ func (s *Server) FetchAllInternalCodemappingsHandler(c *gin.Context) {
 
 func (s *Server) SetInternalCodemappingHandler(c *gin.Context) {
 	var input wholesaledata.InternalCodemappingData
-	if err := c.BindJSON(&input); err != nil {
+	if err := c.ShouldBindJSON(&input); err != nil {
 		c.Error(fmt.Errorf("SetInternalCodemappingHandler with %q - %q", input, err.Error()))
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
