@@ -2,9 +2,12 @@ package helpers
 
 import (
 	"bytes"
+	"errors"
+	"io"
 	"log"
 	"os"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/0x19/goesl"
@@ -85,6 +88,49 @@ func TestLoadConfiguration(t *testing.T) {
 			}
 			if test.expectedError && sipPort != 0 {
 				t.Errorf("expected error, but got SIP port %d", sipPort)
+			}
+		})
+	}
+}
+
+func TestHandleReadError(t *testing.T) {
+	tests := []struct {
+		name    string
+		err     error
+		wantLog string
+	}{
+		{
+			name: "EOF error",
+			err:  errors.New("EOF"),
+		},
+		{
+			name: "unexpected end of JSON input error",
+			err:  errors.New("unexpected end of JSON input"),
+		},
+		{
+			name:    "other error",
+			err:     errors.New("other error"),
+			wantLog: "Error reading Freeswitch message: other error",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Capture log output
+			logBuf := &bytes.Buffer{}
+			log.SetOutput(logBuf)
+			defer log.SetOutput(os.Stderr)
+
+			handleReadError(tt.err)
+
+			// Check log output
+			logOutput, err := io.ReadAll(logBuf)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if (tt.wantLog == "" && len(logOutput) > 0) || (tt.wantLog != "" && !strings.Contains(string(logOutput), tt.wantLog)) {
+				t.Errorf("unexpected log output: got '%s', expected to contain '%s'", string(logOutput), tt.wantLog)
 			}
 		})
 	}
