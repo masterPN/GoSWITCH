@@ -18,6 +18,8 @@ const (
 	exampleDomain  = "example.com"
 	operatorPrefix = "test prefix"
 	jobCommand     = "Job-Command"
+	reasonPhrase   = "test reason"
+	nilGoeslMsg    = "nil goesl message"
 )
 
 func TestLoadConfiguration(t *testing.T) {
@@ -89,6 +91,68 @@ func TestLoadConfiguration(t *testing.T) {
 			if test.expectedError && sipPort != 0 {
 				t.Errorf("expected error, but got SIP port %d", sipPort)
 			}
+		})
+	}
+}
+
+func TestNotifyCalleeIssue(t *testing.T) {
+	tests := []struct {
+		name           string
+		msg            *goesl.Message
+		operatorPrefix string
+		destination    string
+		wantOutput     string
+	}{
+		{
+			name: "valid message headers",
+			msg: &goesl.Message{
+				Headers: map[string]string{
+					"variable_sip_invite_failure_phrase": reasonPhrase,
+					"variable_hangup_cause_q850":         "123",
+				},
+			},
+			operatorPrefix: "operatorPrefix",
+			destination:    "destination",
+			wantOutput:     "Callee issue: operatorPrefix\"destination\", reason - \"test reason\", code - \"123\"\n",
+		},
+		{
+			name:           "missing variable_sip_invite_failure_phrase header",
+			msg:            &goesl.Message{},
+			operatorPrefix: "operatorPrefix",
+			destination:    "destination",
+			wantOutput:     "Callee issue: operatorPrefix\"destination\", reason - \"\", code - \"\"\n",
+		},
+		{
+			name: "missing variable_hangup_cause_q850 header",
+			msg: &goesl.Message{
+				Headers: map[string]string{
+					"variable_sip_invite_failure_phrase": reasonPhrase,
+				},
+			},
+			operatorPrefix: "operatorPrefix",
+			destination:    "destination",
+			wantOutput:     "Callee issue: operatorPrefix\"destination\", reason - \"test reason\", code - \"\"\n",
+		},
+		{
+			name:           nilGoeslMsg,
+			msg:            nil,
+			operatorPrefix: "operatorPrefix",
+			destination:    "destination",
+			wantOutput:     "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			log.SetOutput(&buf)
+			notifyCalleeIssue(tt.msg, tt.operatorPrefix, tt.destination)
+			log.SetOutput(os.Stdout)
+			gotOutput := buf.String()
+			// Use a regular expression to remove the timestamp
+			re := regexp.MustCompile(`^\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2} `)
+			gotOutput = re.ReplaceAllString(gotOutput, "")
+			assert.Equal(t, tt.wantOutput, gotOutput)
 		})
 	}
 }
@@ -374,7 +438,7 @@ func TestIsOperatorUnavailable(t *testing.T) {
 			expected:       false,
 		},
 		{
-			name:     "nil message",
+			name:     nilGoeslMsg,
 			msg:      &goesl.Message{},
 			expected: false,
 		},
@@ -413,14 +477,14 @@ func TestLogOperatorIssue(t *testing.T) {
 			msg: &goesl.Message{
 				Headers: map[string]string{
 					"variable_hangup_cause_q850":         "123",
-					"variable_sip_invite_failure_phrase": "test reason",
+					"variable_sip_invite_failure_phrase": reasonPhrase,
 				},
 			},
 			operatorPrefix: operatorPrefix,
 			wantOutput:     "test prefix has a problem, please contact operator test prefix.\ncode - 123, reason - test reason\n",
 		},
 		{
-			name:           "nil message",
+			name:           nilGoeslMsg,
 			msg:            &goesl.Message{},
 			operatorPrefix: operatorPrefix,
 			wantOutput:     "test prefix has a problem, please contact operator test prefix.\ncode - , reason - \n",
@@ -430,7 +494,7 @@ func TestLogOperatorIssue(t *testing.T) {
 			msg: &goesl.Message{
 				Headers: map[string]string{
 					"variable_hangup_cause_q850":         "123",
-					"variable_sip_invite_failure_phrase": "test reason",
+					"variable_sip_invite_failure_phrase": reasonPhrase,
 				},
 			},
 			operatorPrefix: "",

@@ -273,6 +273,10 @@ func handleCalleeIssue(client *goesl.Client, message *goesl.Message, operatorPre
 }
 
 func notifyCalleeIssue(message *goesl.Message, operatorPrefix, destination string) {
+	if message == nil {
+		return
+	}
+
 	log.Printf("Callee issue: %s%q, reason - %q, code - %q",
 		operatorPrefix, destination,
 		message.Headers["variable_sip_invite_failure_phrase"],
