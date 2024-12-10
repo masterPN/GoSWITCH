@@ -89,6 +89,90 @@ func TestLoadConfiguration(t *testing.T) {
 	}
 }
 
+func TestIsCalleeUnavailable(t *testing.T) {
+	tests := []struct {
+		name           string
+		msg            *goesl.Message
+		operatorPrefix string
+		destination    string
+		expected       bool
+	}{
+		{
+			name: "valid callee unavailable message",
+			msg: &goesl.Message{
+				Headers: map[string]string{
+					answerStateHeader:            "hangup",
+					callerDestinationHeader:      "operatorPrefixdestination",
+					"variable_hangup_cause_q850": "17",
+				},
+			},
+			operatorPrefix: "operatorPrefix",
+			destination:    "destination",
+			expected:       true,
+		},
+		{
+			name: "invalid answer state",
+			msg: &goesl.Message{
+				Headers: map[string]string{
+					answerStateHeader:            "ringing",
+					callerDestinationHeader:      "operatorPrefixdestination",
+					"variable_hangup_cause_q850": "17",
+				},
+			},
+			operatorPrefix: "operatorPrefix",
+			destination:    "destination",
+			expected:       false,
+		},
+		{
+			name: "mismatched caller destination",
+			msg: &goesl.Message{
+				Headers: map[string]string{
+					answerStateHeader:            "hangup",
+					callerDestinationHeader:      "wrongPrefixdestination",
+					"variable_hangup_cause_q850": "17",
+				},
+			},
+			operatorPrefix: "operatorPrefix",
+			destination:    "destination",
+			expected:       false,
+		},
+		{
+			name: "missing hangup cause code",
+			msg: &goesl.Message{
+				Headers: map[string]string{
+					answerStateHeader:       "hangup",
+					callerDestinationHeader: "operatorPrefixdestination",
+				},
+			},
+			operatorPrefix: "operatorPrefix",
+			destination:    "destination",
+			expected:       false,
+		},
+		{
+			name: "hangup cause code not in sipCalleeUnavailableCode",
+			msg: &goesl.Message{
+				Headers: map[string]string{
+					answerStateHeader:            "hangup",
+					callerDestinationHeader:      "operatorPrefixdestination",
+					"variable_hangup_cause_q850": "123",
+				},
+			},
+			operatorPrefix: "operatorPrefix",
+			destination:    "destination",
+			expected:       false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			actual := isCalleeUnavailable(tt.msg, tt.operatorPrefix, tt.destination)
+			if actual != tt.expected {
+				t.Errorf("isCalleeUnavailable() = %v, want %v", actual, tt.expected)
+			}
+		})
+	}
+}
+
 func TestIsOperatorUnavailable(t *testing.T) {
 	tests := []struct {
 		name           string
