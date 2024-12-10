@@ -439,7 +439,7 @@ func TestIsOperatorUnavailable(t *testing.T) {
 		},
 		{
 			name:     nilGoeslMsg,
-			msg:      &goesl.Message{},
+			msg:      nil,
 			expected: false,
 		},
 		{
@@ -485,9 +485,9 @@ func TestLogOperatorIssue(t *testing.T) {
 		},
 		{
 			name:           nilGoeslMsg,
-			msg:            &goesl.Message{},
+			msg:            nil,
 			operatorPrefix: operatorPrefix,
-			wantOutput:     "test prefix has a problem, please contact operator test prefix.\ncode - , reason - \n",
+			wantOutput:     "",
 		},
 		{
 			name: "empty operator prefix",

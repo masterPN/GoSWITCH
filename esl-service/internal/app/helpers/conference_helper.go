@@ -313,6 +313,10 @@ func isCalleeUnavailable(msg *goesl.Message, operatorPrefix, destination string)
 }
 
 func isOperatorUnavailable(msg *goesl.Message, operatorPrefix, destination string) bool {
+	if msg == nil {
+		return false
+	}
+
 	answerState := msg.Headers[answerStateHeader]
 	callerDestination := msg.Headers[callerDestinationHeader]
 	hangupCauseCode := msg.Headers["variable_hangup_cause_q850"]
@@ -323,6 +327,10 @@ func isOperatorUnavailable(msg *goesl.Message, operatorPrefix, destination strin
 }
 
 func logOperatorIssue(msg *goesl.Message, operatorPrefix string) {
+	if msg == nil {
+		return
+	}
+
 	log.Printf(
 		"%s has a problem, please contact operator %s.\n"+
 			"code - %s, reason - %s",
