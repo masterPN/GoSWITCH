@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	exampleDomainPhrase = "example.com"
-	operatorPrefix      = "test prefix"
+	exampleDomain  = "example.com"
+	operatorPrefix = "test prefix"
 )
 
 func TestLoadConfiguration(t *testing.T) {
@@ -28,29 +28,29 @@ func TestLoadConfiguration(t *testing.T) {
 			name: "valid SIP_PORT and EXTERNAL_DOMAIN",
 			envVars: map[string]string{
 				"SIP_PORT":        "5060",
-				"EXTERNAL_DOMAIN": exampleDomainPhrase,
+				"EXTERNAL_DOMAIN": exampleDomain,
 			},
 			expectedSIPPort:        5060,
-			expectedExternalDomain: exampleDomainPhrase,
+			expectedExternalDomain: exampleDomain,
 			expectedError:          false,
 		},
 		{
 			name: "invalid SIP_PORT",
 			envVars: map[string]string{
 				"SIP_PORT":        "not an integer",
-				"EXTERNAL_DOMAIN": exampleDomainPhrase,
+				"EXTERNAL_DOMAIN": exampleDomain,
 			},
 			expectedSIPPort:        0,
-			expectedExternalDomain: exampleDomainPhrase,
+			expectedExternalDomain: exampleDomain,
 			expectedError:          true,
 		},
 		{
 			name: "missing SIP_PORT",
 			envVars: map[string]string{
-				"EXTERNAL_DOMAIN": exampleDomainPhrase,
+				"EXTERNAL_DOMAIN": exampleDomain,
 			},
 			expectedSIPPort:        0,
-			expectedExternalDomain: exampleDomainPhrase,
+			expectedExternalDomain: exampleDomain,
 			expectedError:          true,
 		},
 		{
