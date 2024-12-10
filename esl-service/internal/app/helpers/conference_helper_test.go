@@ -89,6 +89,94 @@ func TestLoadConfiguration(t *testing.T) {
 	}
 }
 
+func TestIsOperatorUnavailable(t *testing.T) {
+	tests := []struct {
+		name           string
+		msg            *goesl.Message
+		operatorPrefix string
+		destination    string
+		expected       bool
+	}{
+		{
+			name: "valid hangup cause code",
+			msg: &goesl.Message{
+				Headers: map[string]string{
+					answerStateHeader:            "hangup",
+					callerDestinationHeader:      "operatorPrefixdestination",
+					"variable_hangup_cause_q850": "1",
+				},
+			},
+			operatorPrefix: "operatorPrefix",
+			destination:    "destination",
+			expected:       true,
+		},
+		{
+			name: "invalid hangup cause code",
+			msg: &goesl.Message{
+				Headers: map[string]string{
+					answerStateHeader:            "hangup",
+					callerDestinationHeader:      "operatorPrefixdestination",
+					"variable_hangup_cause_q850": "2",
+				},
+			},
+			operatorPrefix: "operatorPrefix",
+			destination:    "destination",
+			expected:       false,
+		},
+		{
+			name: "different answer state",
+			msg: &goesl.Message{
+				Headers: map[string]string{
+					answerStateHeader:            "ringing",
+					callerDestinationHeader:      "operatorPrefixdestination",
+					"variable_hangup_cause_q850": "1",
+				},
+			},
+			operatorPrefix: "operatorPrefix",
+			destination:    "destination",
+			expected:       false,
+		},
+		{
+			name: "different caller destination",
+			msg: &goesl.Message{
+				Headers: map[string]string{
+					answerStateHeader:            "hangup",
+					callerDestinationHeader:      "differentPrefix+destination",
+					"variable_hangup_cause_q850": "1",
+				},
+			},
+			operatorPrefix: "operatorPrefix",
+			destination:    "destination",
+			expected:       false,
+		},
+		{
+			name:     "nil message",
+			msg:      &goesl.Message{},
+			expected: false,
+		},
+		{
+			name: "empty hangup cause code",
+			msg: &goesl.Message{
+				Headers: map[string]string{
+					answerStateHeader:            "hangup",
+					callerDestinationHeader:      "operatorPrefixdestination",
+					"variable_hangup_cause_q850": "",
+				},
+			},
+			operatorPrefix: "operatorPrefix",
+			destination:    "destination",
+			expected:       false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			actual := isOperatorUnavailable(test.msg, test.operatorPrefix, test.destination)
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
 func TestLogOperatorIssue(t *testing.T) {
 	tests := []struct {
 		name           string

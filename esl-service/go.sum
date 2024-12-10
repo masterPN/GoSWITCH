@@ -1,5 +1,7 @@
 github.com/0x19/goesl v0.0.0-20230805100056-48992ef4fdb1 h1:zq6czFlf3N+OJ3+qhnH4dCKe7onggNnbCt3QTA4ZPz0=
 github.com/0x19/goesl v0.0.0-20230805100056-48992ef4fdb1/go.mod h1:Xptqx3we8gfkPbMqYhn2VU46/RALZ/AweiMHet2QNp8=
+github.com/go-playground/assert/v2 v2.2.0 h1:JvknZsQTYeFEAhQwI4qEt9cyV5ONwRHC+lYKSsYSR8s=
+github.com/go-playground/assert/v2 v2.2.0/go.mod h1:VDjEfimB/XKnb+ZQfWdccd7VUvScMdVu0Titje2rxJ4=
 github.com/masterPN/GoSWITCH-shared v0.0.0-20241128181226-b0c16645cdfc h1:o7Hk7ADzY/rllFX7zI8w0stR4E3Rpgb8pCurH/+8BIg=
 github.com/masterPN/GoSWITCH-shared v0.0.0-20241128181226-b0c16645cdfc/go.mod h1:gIDl7oC+LZd9buIumCVjryAqE7YyOPCpi0Q2XLJiDOg=
 github.com/op/go-logging v0.0.0-20160315200505-970db520ece7 h1:lDH9UUVJtmYCjyT0CI4q8xvlXPxeZ0gYCVvWbmPlp88=
