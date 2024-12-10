@@ -1,12 +1,19 @@
 package helpers
 
 import (
+	"bytes"
+	"log"
 	"os"
+	"regexp"
 	"testing"
+
+	"github.com/0x19/goesl"
+	"github.com/go-playground/assert/v2"
 )
 
 const (
 	exampleDomainPhrase = "example.com"
+	operatorPrefix      = "test prefix"
 )
 
 func TestLoadConfiguration(t *testing.T) {
@@ -78,6 +85,66 @@ func TestLoadConfiguration(t *testing.T) {
 			if test.expectedError && sipPort != 0 {
 				t.Errorf("expected error, but got SIP port %d", sipPort)
 			}
+		})
+	}
+}
+
+func TestLogOperatorIssue(t *testing.T) {
+	tests := []struct {
+		name           string
+		msg            *goesl.Message
+		operatorPrefix string
+		wantOutput     string
+	}{
+		{
+			name: "valid message and operator prefix",
+			msg: &goesl.Message{
+				Headers: map[string]string{
+					"variable_hangup_cause_q850":         "123",
+					"variable_sip_invite_failure_phrase": "test reason",
+				},
+			},
+			operatorPrefix: operatorPrefix,
+			wantOutput:     "test prefix has a problem, please contact operator test prefix.\ncode - 123, reason - test reason\n",
+		},
+		{
+			name:           "nil message",
+			msg:            &goesl.Message{},
+			operatorPrefix: operatorPrefix,
+			wantOutput:     "test prefix has a problem, please contact operator test prefix.\ncode - , reason - \n",
+		},
+		{
+			name: "empty operator prefix",
+			msg: &goesl.Message{
+				Headers: map[string]string{
+					"variable_hangup_cause_q850":         "123",
+					"variable_sip_invite_failure_phrase": "test reason",
+				},
+			},
+			operatorPrefix: "",
+			wantOutput:     " has a problem, please contact operator .\ncode - 123, reason - test reason\n",
+		},
+		{
+			name: "missing headers in message",
+			msg: &goesl.Message{
+				Headers: map[string]string{},
+			},
+			operatorPrefix: operatorPrefix,
+			wantOutput:     "test prefix has a problem, please contact operator test prefix.\ncode - , reason - \n",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			log.SetOutput(&buf)
+			logOperatorIssue(tt.msg, tt.operatorPrefix)
+			log.SetOutput(os.Stdout)
+			gotOutput := buf.String()
+			// Use a regular expression to remove the timestamp
+			re := regexp.MustCompile(`^\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2} `)
+			gotOutput = re.ReplaceAllString(gotOutput, "")
+			assert.Equal(t, tt.wantOutput, gotOutput)
 		})
 	}
 }
