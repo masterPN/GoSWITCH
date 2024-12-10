@@ -14,6 +14,7 @@ import (
 const (
 	exampleDomain  = "example.com"
 	operatorPrefix = "test prefix"
+	jobCommand     = "Job-Command"
 )
 
 func TestLoadConfiguration(t *testing.T) {
@@ -85,6 +86,99 @@ func TestLoadConfiguration(t *testing.T) {
 			if test.expectedError && sipPort != 0 {
 				t.Errorf("expected error, but got SIP port %d", sipPort)
 			}
+		})
+	}
+}
+
+func TestIsConnected(t *testing.T) {
+	tests := []struct {
+		name           string
+		msg            *goesl.Message
+		operatorPrefix string
+		destination    string
+		expected       bool
+	}{
+		{
+			name: "add-member action and matching caller destination",
+			msg: &goesl.Message{
+				Headers: map[string]string{
+					"Action":                "add-member",
+					answerStateHeader:       "early",
+					callerDestinationHeader: "operatorPrefixdestination",
+				},
+			},
+			operatorPrefix: "operatorPrefix",
+			destination:    "destination",
+			expected:       true,
+		},
+		{
+			name: "add-member action and non-matching caller destination",
+			msg: &goesl.Message{
+				Headers: map[string]string{
+					"Action":                "add-member",
+					answerStateHeader:       "early",
+					callerDestinationHeader: "wrongPrefixdestination",
+				},
+			},
+			operatorPrefix: "operatorPrefix",
+			destination:    "destination",
+			expected:       false,
+		},
+		{
+			name: "show Job-Command and matching conference body",
+			msg: &goesl.Message{
+				Headers: map[string]string{
+					jobCommand:               "show",
+					"Job-Command-Arg":        "channels",
+					"Event-Calling-Function": "bgapi_exec",
+					"body":                   "operatorPrefixdestination,conference",
+				},
+			},
+			operatorPrefix: "operatorPrefix",
+			destination:    "destination",
+			expected:       true,
+		},
+		{
+			name: "show Job-Command and non-matching conference body",
+			msg: &goesl.Message{
+				Headers: map[string]string{
+					jobCommand:               "show",
+					"Job-Command-Arg":        "channels",
+					"Event-Calling-Function": "bgapi_exec",
+					"body":                   "wrongPrefixdestination,conference",
+				},
+			},
+			operatorPrefix: "operatorPrefix",
+			destination:    "destination",
+			expected:       false,
+		},
+		{
+			name: "non-matching action and Job-Command",
+			msg: &goesl.Message{
+				Headers: map[string]string{
+					"Action":   "wrong-action",
+					jobCommand: "wrong-command",
+				},
+			},
+			operatorPrefix: "operatorPrefix",
+			destination:    "destination",
+			expected:       false,
+		},
+		{
+			name: "empty message headers",
+			msg: &goesl.Message{
+				Headers: map[string]string{},
+			},
+			operatorPrefix: "operatorPrefix",
+			destination:    "destination",
+			expected:       false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			actual := isConnected(test.msg, test.operatorPrefix, test.destination)
+			assert.Equal(t, test.expected, actual)
 		})
 	}
 }
