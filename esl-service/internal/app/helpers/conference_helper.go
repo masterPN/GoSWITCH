@@ -1,9 +1,8 @@
-package handlers
+package helpers
 
 import (
 	"bytes"
 	"encoding/json"
-	"esl-service/internal/app/helpers"
 	"esl-service/internal/data"
 	"fmt"
 	"log"
@@ -19,20 +18,32 @@ import (
 	sharedData "github.com/masterPN/GoSWITCH-shared/data"
 )
 
+const (
+	answerStateHeader        = "Answer-State"
+	callerDestinationHeader  = "Caller-Destination-Number"
+	destroyConferenceCommand = "conference %v kick all"
+	jsonContentType          = "application/json"
+)
+
+var (
+	sipOperatorUnavailableCode = []string{"1", "41"}
+	sipCalleeUnavailableCode   = []string{"17"}
+)
+
 // Configuration loading function
-func loadConfiguration() (int, string) {
+func LoadConfiguration() (int, string) {
 	sipPort, _ := strconv.Atoi(os.Getenv("SIP_PORT"))
 	externalDomain := os.Getenv("EXTERNAL_DOMAIN")
 	return sipPort, externalDomain
 }
 
 // Main Conference Call handler
-func initiateConferenceCalls(client *goesl.Client, initConferenceData []string, externalDomain string, sipPort int, msg map[string]string) error {
+func InitiateConferenceCalls(client *goesl.Client, initConferenceData []string, externalDomain string, sipPort int, msg map[string]string) error {
 	if validateRadiusAndHandleConference(client, initConferenceData, msg) {
 		return nil
 	}
 
-	routingResponse, err := fetchOperatorRouting(helpers.NormalizeDestinationNumber(initConferenceData[3]))
+	routingResponse, err := fetchOperatorRouting(NormalizeDestinationNumber(initConferenceData[3]))
 	if err != nil {
 		log.Printf("Error fetching operator routing: %s\n", err)
 		return err
@@ -73,8 +84,8 @@ func initiateConferenceCalls(client *goesl.Client, initConferenceData []string, 
 func validateRadiusAndHandleConference(client *goesl.Client, conferenceInitData []string, msg map[string]string) bool {
 	radiusValidationRequest, _ := json.Marshal(map[string]string{
 		"prefix":            strings.Replace(msg[callerDestinationHeader], conferenceInitData[3], "", 1),
-		"callingNumber":     helpers.NormalizeDestinationNumber(conferenceInitData[2]),
-		"destinationNumber": helpers.NormalizeDestinationNumber(conferenceInitData[3]),
+		"callingNumber":     NormalizeDestinationNumber(conferenceInitData[2]),
+		"destinationNumber": NormalizeDestinationNumber(conferenceInitData[3]),
 	})
 
 	radiusValidationResponse, err := http.Post("http://mssql-service:8080/radiusOnestageValidate", jsonContentType, bytes.NewBuffer(radiusValidationRequest))
@@ -98,8 +109,8 @@ func validateRadiusAndHandleConference(client *goesl.Client, conferenceInitData 
 
 	radiusAccountingData := data.RadiusAccounting{
 		AccessNo:     radiusValidationResponseData.PrefixNo,
-		Anino:        helpers.NormalizeDestinationNumber(conferenceInitData[2]),
-		DestNo:       helpers.NormalizeDestinationNumber(conferenceInitData[3]),
+		Anino:        NormalizeDestinationNumber(conferenceInitData[2]),
+		DestNo:       NormalizeDestinationNumber(conferenceInitData[3]),
 		SubscriberNo: radiusValidationResponseData.AccountNum,
 		SessionID:    conferenceInitData[1],
 		InTrunkID:    0,
@@ -161,15 +172,15 @@ func fetchInternalCodemapping(internalCode string) (data.InternalCodemappingData
 
 func originateCall(client *goesl.Client, initConferenceData []string, baseClass int, operatorPrefix, externalDomain string, sipPort int) bool {
 	client.BgApi(fmt.Sprintf("originate {origination_caller_id_number=%s}sofia/external/%s%s@%s:%v &conference(%s)",
-		initConferenceData[2], operatorPrefix, helpers.NormalizeDestinationNumber(initConferenceData[3]), externalDomain, sipPort,
+		initConferenceData[2], operatorPrefix, NormalizeDestinationNumber(initConferenceData[3]), externalDomain, sipPort,
 		initConferenceData[1]))
 
-	return waitForCall(client, baseClass, operatorPrefix, helpers.NormalizeDestinationNumber(initConferenceData[3]), initConferenceData[1])
+	return waitForCall(client, baseClass, operatorPrefix, NormalizeDestinationNumber(initConferenceData[3]), initConferenceData[1])
 }
 
 // Wait for the call to be established and handle various states
 func waitForCall(client *goesl.Client, baseClass int, operatorPrefix, destination, conferenceName string) bool {
-	secondaryClient, err := helpers.CreateClient()
+	secondaryClient, err := CreateClient()
 	if err != nil {
 		goesl.Debug("Create secondary client in waitForCall failed!")
 		return false
