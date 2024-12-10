@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bytes"
 	"encoding/json"
 	"esl-service/internal/app/helpers"
 	"esl-service/internal/data"
@@ -46,13 +47,27 @@ func getRedisData(conferenceName string) *data.RadiusAccounting {
 }
 
 func updateMsSql(redisData *data.RadiusAccounting, eventData map[string]string) {
-	loc, _ := time.LoadLocation("Asia/Bangkok")
+	location, err := time.LoadLocation("Asia/Bangkok")
+	if err != nil {
+		log.Printf("Error loading location: %s\n", err)
+		return
+	}
 
-	hangupTimeUnix, _ := strconv.Atoi(eventData["Caller-Channel-Hangup-Time"])
-	hangupTime := time.UnixMicro(int64(hangupTimeUnix)).In(loc)
-	talkingStartTime, _ := time.ParseInLocation(timeFormat, redisData.TalkingTime, loc)
+	hangupTimeUnix, err := strconv.Atoi(eventData["Caller-Channel-Hangup-Time"])
+	if err != nil {
+		log.Printf("Error converting hangup time: %s\n", err)
+		return
+	}
+	hangupTime := time.UnixMicro(int64(hangupTimeUnix)).In(location)
 
-	if nilTime, _ := time.Parse(timeFormat, "01/01/0001 00:00:00"); talkingStartTime == nilTime {
+	talkingStartTime, err := time.ParseInLocation(timeFormat, redisData.TalkingTime, location)
+	if err != nil {
+		log.Printf("Error parsing talking start time: %s\n", err)
+		return
+	}
+
+	nilTime, _ := time.Parse(timeFormat, "01/01/0001 00:00:00")
+	if talkingStartTime.Equal(nilTime) {
 		hangupTime = nilTime
 	}
 
@@ -63,9 +78,16 @@ func updateMsSql(redisData *data.RadiusAccounting, eventData map[string]string) 
 	redisData.ReleaseCode = eventData["variable_hangup_cause_q850"]
 	redisData.LanguageCode = ""
 
-	_, err := http.Post("http://mssql-service:8080/radiusAccounting", "application/json", redisData)
+	jsonData, err := json.Marshal(redisData)
 	if err != nil {
-		log.Printf("POST http://mssql-service:8080/radiusAccounting - %s\n", err)
+		log.Printf("Error marshaling redisData to JSON: %s\n", err)
 		return
 	}
+
+	response, err := http.Post("http://mssql-service:8080/radiusAccounting", "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		log.Printf("Error sending POST request: %s\n", err)
+		return
+	}
+	defer response.Body.Close()
 }
