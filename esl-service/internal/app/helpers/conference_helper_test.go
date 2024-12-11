@@ -23,6 +23,8 @@ const (
 )
 
 func TestLoadConfiguration(t *testing.T) {
+	ch := ConferenceHelperModel{}
+
 	tests := []struct {
 		name                   string
 		envVars                map[string]string
@@ -79,7 +81,7 @@ func TestLoadConfiguration(t *testing.T) {
 			}
 
 			// Call LoadConfiguration
-			sipPort, externalDomain := LoadConfiguration()
+			sipPort, externalDomain := ch.LoadConfiguration()
 
 			// Check results
 			if sipPort != test.expectedSIPPort {
@@ -96,6 +98,8 @@ func TestLoadConfiguration(t *testing.T) {
 }
 
 func TestNotifyCalleeIssue(t *testing.T) {
+	ch := ConferenceHelperModel{}
+
 	tests := []struct {
 		name           string
 		msg            *goesl.Message
@@ -146,7 +150,7 @@ func TestNotifyCalleeIssue(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			log.SetOutput(&buf)
-			notifyCalleeIssue(tt.msg, tt.operatorPrefix, tt.destination)
+			ch.notifyCalleeIssue(tt.msg, tt.operatorPrefix, tt.destination)
 			log.SetOutput(os.Stdout)
 			gotOutput := buf.String()
 			// Use a regular expression to remove the timestamp
@@ -158,6 +162,8 @@ func TestNotifyCalleeIssue(t *testing.T) {
 }
 
 func TestHandleReadError(t *testing.T) {
+	ch := ConferenceHelperModel{}
+
 	tests := []struct {
 		name    string
 		err     error
@@ -185,7 +191,7 @@ func TestHandleReadError(t *testing.T) {
 			log.SetOutput(logBuf)
 			defer log.SetOutput(os.Stderr)
 
-			handleReadError(tt.err)
+			ch.handleReadError(tt.err)
 
 			// Check log output
 			logOutput, err := io.ReadAll(logBuf)
@@ -201,6 +207,8 @@ func TestHandleReadError(t *testing.T) {
 }
 
 func TestIsConnected(t *testing.T) {
+	ch := ConferenceHelperModel{}
+
 	tests := []struct {
 		name           string
 		msg            *goesl.Message
@@ -287,13 +295,15 @@ func TestIsConnected(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actual := isConnected(test.msg, test.operatorPrefix, test.destination)
+			actual := ch.isConnected(test.msg, test.operatorPrefix, test.destination)
 			assert.Equal(t, test.expected, actual)
 		})
 	}
 }
 
 func TestIsCalleeUnavailable(t *testing.T) {
+	ch := ConferenceHelperModel{}
+
 	tests := []struct {
 		name           string
 		msg            *goesl.Message
@@ -369,7 +379,7 @@ func TestIsCalleeUnavailable(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual := isCalleeUnavailable(tt.msg, tt.operatorPrefix, tt.destination)
+			actual := ch.isCalleeUnavailable(tt.msg, tt.operatorPrefix, tt.destination)
 			if actual != tt.expected {
 				t.Errorf("isCalleeUnavailable() = %v, want %v", actual, tt.expected)
 			}
@@ -378,6 +388,8 @@ func TestIsCalleeUnavailable(t *testing.T) {
 }
 
 func TestIsOperatorUnavailable(t *testing.T) {
+	ch := ConferenceHelperModel{}
+
 	tests := []struct {
 		name           string
 		msg            *goesl.Message
@@ -459,13 +471,15 @@ func TestIsOperatorUnavailable(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actual := isOperatorUnavailable(test.msg, test.operatorPrefix, test.destination)
+			actual := ch.isOperatorUnavailable(test.msg, test.operatorPrefix, test.destination)
 			assert.Equal(t, test.expected, actual)
 		})
 	}
 }
 
 func TestLogOperatorIssue(t *testing.T) {
+	ch := ConferenceHelperModel{}
+
 	tests := []struct {
 		name           string
 		msg            *goesl.Message
@@ -514,7 +528,7 @@ func TestLogOperatorIssue(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			log.SetOutput(&buf)
-			logOperatorIssue(tt.msg, tt.operatorPrefix)
+			ch.logOperatorIssue(tt.msg, tt.operatorPrefix)
 			log.SetOutput(os.Stdout)
 			gotOutput := buf.String()
 			// Use a regular expression to remove the timestamp

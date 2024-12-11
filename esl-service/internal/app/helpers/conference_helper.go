@@ -30,20 +30,25 @@ var (
 	sipCalleeUnavailableCode   = []string{"17"}
 )
 
+type ConferenceHelperModel struct {
+	client  *goesl.Client
+	message *goesl.Message
+}
+
 // Configuration loading function
-func LoadConfiguration() (int, string) {
+func (ch ConferenceHelperModel) LoadConfiguration() (int, string) {
 	sipPort, _ := strconv.Atoi(os.Getenv("SIP_PORT"))
 	externalDomain := os.Getenv("EXTERNAL_DOMAIN")
 	return sipPort, externalDomain
 }
 
 // Main Conference Call handler
-func InitiateConferenceCalls(client *goesl.Client, conferenceData []string, externalDomain string, sipPort int, message map[string]string) error {
-	if ValidateRadiusAndHandleConference(client, conferenceData, message) {
+func (ch ConferenceHelperModel) InitiateConferenceCalls(client *goesl.Client, conferenceData []string, externalDomain string, sipPort int, message map[string]string) error {
+	if ch.ValidateRadiusAndHandleConference(client, conferenceData, message) {
 		return nil
 	}
 
-	routeData, err := FetchOptimalRouteData(NormalizeDestinationNumber(conferenceData[3]))
+	routeData, err := ch.FetchOptimalRouteData(NormalizeDestinationNumber(conferenceData[3]))
 	if err != nil {
 		log.Printf("Error fetching operator routing: %s\n", err)
 		return err
@@ -56,14 +61,14 @@ func InitiateConferenceCalls(client *goesl.Client, conferenceData []string, exte
 			continue
 		}
 
-		mappingData, err := FetchInternalCodemapping(strconv.Itoa(baseClass))
+		mappingData, err := ch.FetchInternalCodemapping(strconv.Itoa(baseClass))
 		if err != nil {
 			log.Printf("Error fetching internal code mapping: %s\n", err)
 			continue
 		}
 
 		operatorPrefix := strconv.Itoa(mappingData.OperatorCode)
-		if OriginateCallToOperator(client, conferenceData, baseClass, operatorPrefix, externalDomain, sipPort) {
+		if ch.OriginateCallToOperator(client, conferenceData, baseClass, operatorPrefix, externalDomain, sipPort) {
 			return nil
 		}
 	}
@@ -77,7 +82,7 @@ func InitiateConferenceCalls(client *goesl.Client, conferenceData []string, exte
 // Helper functions for network communication
 
 // Validate radius and handle conference destruction if necessary
-func ValidateRadiusAndHandleConference(client *goesl.Client, conferenceInitData []string, msg map[string]string) bool {
+func (ch ConferenceHelperModel) ValidateRadiusAndHandleConference(client *goesl.Client, conferenceInitData []string, msg map[string]string) bool {
 	requestData := map[string]string{
 		"prefix":            strings.Replace(msg[callerDestinationHeader], conferenceInitData[3], "", 1),
 		"callingNumber":     NormalizeDestinationNumber(conferenceInitData[2]),
@@ -119,7 +124,7 @@ func ValidateRadiusAndHandleConference(client *goesl.Client, conferenceInitData 
 }
 
 // FetchOptimalRouteData fetches the optimal route data for a given destination
-func FetchOptimalRouteData(destination string) (data.OptimalRouteData, error) {
+func (ch ConferenceHelperModel) FetchOptimalRouteData(destination string) (data.OptimalRouteData, error) {
 	url := fmt.Sprintf("http://mssql-service:8080/optimalRoute?pCallString=%s", destination)
 	resp, err := http.Get(url)
 	if err != nil {
@@ -134,8 +139,8 @@ func FetchOptimalRouteData(destination string) (data.OptimalRouteData, error) {
 	return optimalRouteData, nil
 }
 
-// FetchInternalCodemapping fetches the internal code mapping for a given internal code
-func FetchInternalCodemapping(internalCode string) (data.InternalCodemappingData, error) {
+// ch.FetchInternalCodemapping fetches the internal code mapping for a given internal code
+func (ch ConferenceHelperModel) FetchInternalCodemapping(internalCode string) (data.InternalCodemappingData, error) {
 	resp, err := http.Get(fmt.Sprintf("http://redis-service:8080/internalCodemappingData/%s", internalCode))
 	if err != nil {
 		return data.InternalCodemappingData{}, err
@@ -162,7 +167,7 @@ func FetchInternalCodemapping(internalCode string) (data.InternalCodemappingData
 
 // Originate call to a given operator
 
-func OriginateCallToOperator(client *goesl.Client, conferenceData []string, operatorCode int, operatorPrefix, externalDomain string, sipPort int) bool {
+func (ch ConferenceHelperModel) OriginateCallToOperator(client *goesl.Client, conferenceData []string, operatorCode int, operatorPrefix, externalDomain string, sipPort int) bool {
 	callerIDNumber := conferenceData[2]
 	calleeNumber := NormalizeDestinationNumber(conferenceData[3])
 	conferenceName := conferenceData[1]
@@ -172,11 +177,11 @@ func OriginateCallToOperator(client *goesl.Client, conferenceData []string, oper
 		callerIDNumber, operatorPrefix, calleeNumber, externalDomain, sipPort, conferenceName,
 	))
 
-	return waitForCallToBeEstablished(client, operatorCode, operatorPrefix, calleeNumber, conferenceName)
+	return ch.waitForCallToBeEstablished(client, operatorCode, operatorPrefix, calleeNumber, conferenceName)
 }
 
 // Wait for the call to be established and handle various states
-func waitForCallToBeEstablished(client *goesl.Client, baseClass int, operatorPrefix, destination, conferenceName string) bool {
+func (ch ConferenceHelperModel) waitForCallToBeEstablished(client *goesl.Client, baseClass int, operatorPrefix, destination, conferenceName string) bool {
 	secondaryClient, err := CreateClient()
 	if err != nil {
 		log.Printf("Failed to create secondary client in waitForCall: %v", err)
@@ -188,24 +193,24 @@ func waitForCallToBeEstablished(client *goesl.Client, baseClass int, operatorPre
 	var once sync.Once
 
 	for {
-		if !isWithinTimeout(startTime) {
+		if !ch.isWithinTimeout(startTime) {
 			break
 		}
 
-		handleBackgroundApiCall(client, startTime, &once)
+		ch.handleBackgroundApiCall(client, startTime, &once)
 
 		message, err := secondaryClient.ReadMessage()
 		if err != nil {
-			handleReadError(err)
+			ch.handleReadError(err)
 			break
 		}
 
-		if processCalleeAndConnection(message, client, baseClass, operatorPrefix, destination, conferenceName) {
+		if ch.processCalleeAndConnection(message, client, baseClass, operatorPrefix, destination, conferenceName) {
 			return true
 		}
 
-		if isOperatorUnavailable(message, operatorPrefix, destination) {
-			logOperatorIssue(message, operatorPrefix)
+		if ch.isOperatorUnavailable(message, operatorPrefix, destination) {
+			ch.logOperatorIssue(message, operatorPrefix)
 			return false
 		}
 	}
@@ -216,11 +221,11 @@ func waitForCallToBeEstablished(client *goesl.Client, baseClass int, operatorPre
 
 // Helper functions for processing call results
 
-func isWithinTimeout(start time.Time) bool {
+func (ch ConferenceHelperModel) isWithinTimeout(start time.Time) bool {
 	return time.Since(start) <= 5*time.Second
 }
 
-func handleBackgroundApiCall(client *goesl.Client, startTime time.Time, once *sync.Once) {
+func (ch ConferenceHelperModel) handleBackgroundApiCall(client *goesl.Client, startTime time.Time, once *sync.Once) {
 	if time.Since(startTime) > 2*time.Second {
 		once.Do(func() {
 			client.BgApi("show channels")
@@ -228,13 +233,13 @@ func handleBackgroundApiCall(client *goesl.Client, startTime time.Time, once *sy
 	}
 }
 
-func processCalleeAndConnection(message *goesl.Message, client *goesl.Client, baseClass int, operatorPrefix, destination, conferenceName string) bool {
-	if isConnected(message, operatorPrefix, destination) {
-		return handleConnectedCall(client, baseClass, conferenceName)
+func (ch ConferenceHelperModel) processCalleeAndConnection(message *goesl.Message, client *goesl.Client, baseClass int, operatorPrefix, destination, conferenceName string) bool {
+	if ch.isConnected(message, operatorPrefix, destination) {
+		return ch.handleConnectedCall(client, baseClass, conferenceName)
 	}
 
-	if isCalleeUnavailable(message, operatorPrefix, destination) {
-		handleCalleeIssue(client, message, operatorPrefix, destination, conferenceName)
+	if ch.isCalleeUnavailable(message, operatorPrefix, destination) {
+		ch.handleCalleeIssue(client, message, operatorPrefix, destination, conferenceName)
 		return true
 	}
 
@@ -243,7 +248,7 @@ func processCalleeAndConnection(message *goesl.Message, client *goesl.Client, ba
 
 // Helper functions for managing specific call states
 
-func handleConnectedCall(client *goesl.Client, baseClass int, conferenceName string) bool {
+func (ch ConferenceHelperModel) handleConnectedCall(client *goesl.Client, baseClass int, conferenceName string) bool {
 	radiusAccountingData := data.RadiusAccounting{
 		SessionID:  conferenceName,
 		OutTrunkID: baseClass,
@@ -266,13 +271,13 @@ func handleConnectedCall(client *goesl.Client, baseClass int, conferenceName str
 	return true
 }
 
-func handleCalleeIssue(client *goesl.Client, message *goesl.Message, operatorPrefix, destination, conferenceName string) {
-	notifyCalleeIssue(message, operatorPrefix, destination)
+func (ch ConferenceHelperModel) handleCalleeIssue(client *goesl.Client, message *goesl.Message, operatorPrefix, destination, conferenceName string) {
+	ch.notifyCalleeIssue(message, operatorPrefix, destination)
 	client.BgApi(fmt.Sprintf(destroyConferenceCommand, conferenceName))
 	http.Get(fmt.Sprintf("http://redis-service:8080/popRadiusAccountingData/%s", conferenceName))
 }
 
-func notifyCalleeIssue(message *goesl.Message, operatorPrefix, destination string) {
+func (ch ConferenceHelperModel) notifyCalleeIssue(message *goesl.Message, operatorPrefix, destination string) {
 	if message == nil {
 		return
 	}
@@ -283,14 +288,14 @@ func notifyCalleeIssue(message *goesl.Message, operatorPrefix, destination strin
 		message.Headers["variable_hangup_cause_q850"])
 }
 
-func handleReadError(err error) {
+func (ch ConferenceHelperModel) handleReadError(err error) {
 	errorMessage := err.Error()
 	if !strings.Contains(errorMessage, "EOF") && errorMessage != "unexpected end of JSON input" {
 		log.Printf("Error reading Freeswitch message: %v", err)
 	}
 }
 
-func isConnected(msg *goesl.Message, operatorPrefix, destination string) bool {
+func (ch ConferenceHelperModel) isConnected(msg *goesl.Message, operatorPrefix, destination string) bool {
 	action := msg.Headers["Action"]
 	answerState := msg.Headers[answerStateHeader]
 	callerDestination := msg.Headers[callerDestinationHeader]
@@ -302,7 +307,7 @@ func isConnected(msg *goesl.Message, operatorPrefix, destination string) bool {
 			msg.Headers["Event-Calling-Function"] == "bgapi_exec")
 }
 
-func isCalleeUnavailable(msg *goesl.Message, operatorPrefix, destination string) bool {
+func (ch ConferenceHelperModel) isCalleeUnavailable(msg *goesl.Message, operatorPrefix, destination string) bool {
 	answerState := msg.Headers[answerStateHeader]
 	callerDestination := msg.Headers[callerDestinationHeader]
 	hangupCauseCode := msg.Headers["variable_hangup_cause_q850"]
@@ -312,7 +317,7 @@ func isCalleeUnavailable(msg *goesl.Message, operatorPrefix, destination string)
 		slices.Contains(sipCalleeUnavailableCode, hangupCauseCode)
 }
 
-func isOperatorUnavailable(msg *goesl.Message, operatorPrefix, destination string) bool {
+func (ch ConferenceHelperModel) isOperatorUnavailable(msg *goesl.Message, operatorPrefix, destination string) bool {
 	if msg == nil {
 		return false
 	}
@@ -326,7 +331,7 @@ func isOperatorUnavailable(msg *goesl.Message, operatorPrefix, destination strin
 		slices.Contains(sipOperatorUnavailableCode, hangupCauseCode)
 }
 
-func logOperatorIssue(msg *goesl.Message, operatorPrefix string) {
+func (ch ConferenceHelperModel) logOperatorIssue(msg *goesl.Message, operatorPrefix string) {
 	if msg == nil {
 		return
 	}
