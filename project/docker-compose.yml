@@ -30,7 +30,7 @@ services:
   redis:
     image: redis:7.2.5-alpine
     healthcheck:
-      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      test: [ "CMD-SHELL", "redis-cli ping | grep PONG" ]
       interval: 1s
       timeout: 3s
       retries: 5
@@ -38,11 +38,12 @@ services:
     ports:
       - 8092:6379
     environment:
-      - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL
-      - REDIS_PASSWORD=${password}
+      - REDIS_PASSWORD_FILE=/run/secrets/redis_password
+    secrets:
+      - redis_password
     volumes:
-      - ./../redis-data:/data
-    command: redis-server --requirepass ${password}
+      - redis-data:/data
+    command: redis-server --requirepass ${REDIS_PASSWORD_FILE}
 
   redis-service:
     env_file:
@@ -56,3 +57,23 @@ services:
     deploy:
       mode: replicated
       replicas: 1
+
+    batch-service:
+      env_file:
+        - path: ./../batch-service/.env
+      build:
+        context: ./../batch-service
+        dockerfile: ./../batch-service/batch-service.dockerfile
+      ports:
+        - 8094:8080
+      restart: unless-stopped
+      deploy:
+        mode: replicated
+        replicas: 1
+
+volumes:
+  redis-data:
+
+secrets:
+  redis_password:
+    external: true
